@@ -7,4 +7,7 @@
     <string name="accounts">Accounts</string>
     <string name="games">Games</string>
     <string name="download">Download</string>
+    <string name="launch_game">Launch Game</string>
+    <string name="microsoft_account">Microsoft</string>
+    <string name="not_logged_in">Not Logged In</string>
 </resources>

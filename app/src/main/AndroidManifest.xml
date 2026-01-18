@@ -2,6 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -25,5 +32,35 @@
         </activity>
 
     </application>
+
+    <queries>
+        <package android:name="com.mojang.minecraftpa" />
+        <package android:name="com.mojang.minecraftpb" />
+        <package android:name="com.mojang.minecraftpc" />
+        <package android:name="com.mojang.minecraftpd" />
+        <package android:name="com.mojang.minecraftpe" />
+        <package android:name="com.mojang.minecraftpf" />
+        <package android:name="com.mojang.minecraftpg" />
+        <package android:name="com.mojang.minecraftph" />
+        <package android:name="com.mojang.minecraftpi" />
+        <package android:name="com.mojang.minecraftpj" />
+        <package android:name="com.mojang.minecraftpk" />
+        <package android:name="com.mojang.minecraftpl" />
+        <package android:name="com.mojang.minecraftpm" />
+        <package android:name="com.mojang.minecraftpn" />
+        <package android:name="com.mojang.minecraftpo" />
+        <package android:name="com.mojang.minecraftpp" />
+        <package android:name="com.mojang.minecraftpq" />
+        <package android:name="com.mojang.minecraftpr" />
+        <package android:name="com.mojang.minecraftps" />
+        <package android:name="com.mojang.minecraftpt" />
+        <package android:name="com.mojang.minecraftpu" />
+        <package android:name="com.mojang.minecraftpv" />
+        <package android:name="com.mojang.minecraftpw" />
+        <package android:name="com.mojang.minecraftpx" />
+        <package android:name="com.mojang.minecraftpy" />
+        <package android:name="com.mojang.minecraftpz" />
+        <package android:name="com.mojang.minecraftpenp" />
+    </queries>
 
 </manifest>

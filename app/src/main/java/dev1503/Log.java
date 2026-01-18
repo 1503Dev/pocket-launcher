@@ -27,6 +27,10 @@ public final class Log {
         return android.util.Log.e(tag, msg);
     }
 
+    public static int e(@Nullable String tag, @NonNull Throwable tr) {
+        return e(tag, "", tr);
+    }
+
     public static int e(@Nullable String tag, @Nullable String msg, @Nullable Throwable tr) {
         return android.util.Log.e(tag, msg, tr);
     }
