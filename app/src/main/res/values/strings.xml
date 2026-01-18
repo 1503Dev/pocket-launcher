@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">PocketLauncher</string>
+    <string name="back">Back</string>
+    <string name="exit">Exit</string>
+    <string name="minimize">Minimize</string>
+    <string name="are_you_sure_exit">Are you sure exit?</string>
+    <string name="accounts">Accounts</string>
+    <string name="games">Games</string>
+    <string name="download">Download</string>
+</resources>
