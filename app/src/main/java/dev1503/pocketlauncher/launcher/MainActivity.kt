@@ -17,6 +17,8 @@ import dev1503.pocketlauncher.HttpUtils
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.XboxAPI
+import dev1503.pocketlauncher.launcher.fragments.Fragment
+import dev1503.pocketlauncher.launcher.fragments.FragmentMain
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
@@ -33,15 +35,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var layoutContainer: ViewGroup
     private lateinit var layoutMain: ViewGroup
 
+    // Title bar elements
     private lateinit var titleBarIcon: ImageView
     private lateinit var titleBarBack: ImageView
     private lateinit var titleBarExit: ImageView
     private lateinit var titleBarMinimize: ImageView
     private lateinit var titleBarTitle: TextView
 
-    private lateinit var mainAccountName: TextView
-    private lateinit var mainLoginMethod: TextView
-    private lateinit var mainAccountIcon: ImageView
+    // Fragment
+    private lateinit var fragments: MutableMap<String, Fragment>
+    private var currentFragmentName: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,18 +52,19 @@ class MainActivity : AppCompatActivity() {
         setContentView(contentView)
         layoutContainer = findViewWithTag("container") as ViewGroup
         initLayouts()
-        initMsAccount()
     }
 
     private fun initLayouts() {
         initTitleBar()
-        layoutMain = View.inflate(self, R.layout.layout_launcher_main, layoutContainer) as ViewGroup
-        mainAccountName = findViewWithTag("main_account_name") as TextView
-        mainLoginMethod = findViewWithTag("main_login_method") as TextView
-        mainAccountIcon = findViewWithTag("main_account_icon") as ImageView
+        fragments = mutableMapOf()
+
+        layoutMain = View.inflate(self, R.layout.layout_launcher_main, null) as ViewGroup
+        fragments.put("main", FragmentMain(self, layoutMain))
+
+        switchFragment("main")
 
         findViewWithTag("main_action_download").setOnClickListener { v ->
-            // Add your click listener logic here
+            switchFragment("download");
         }
 
         Utils.setAllTextColor(
@@ -93,112 +97,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("CheckResult")
-    private fun initMsAccount() {
-        mainAccountIcon.setImageResource(R.drawable.person_24px)
-        mainAccountName.setText(R.string.accounts)
-        mainLoginMethod.setText(R.string.not_logged_in)
-
-        val single: Single<*>? = Utils.getCurrentXalIdRx(self)
-        single?.subscribe { str ->
-            if (str != null) {
-                try {
-                    val jsonObject = Gson().fromJson(str as String, JsonObject::class.java)
-                    val id = jsonObject.get("default").asString
-                    Utils.searchFilesWithContent(
-                        Utils.getXalDirPath(self),
-                        id,
-                        object : Utils.FilesSearchWithContentListener {
-                            override fun onSearchComplete(files: List<File>, fileContents: List<String>) {
-                                Thread {
-                                    for (i in files.indices) {
-                                        try {
-                                            val content = fileContents[i]
-                                            val jsonObject =
-                                                Gson().fromJson(content, JsonObject::class.java)
-                                            val tokens: JsonArray = jsonObject.get("tokens").asJsonArray
-                                            for (j in tokens.toList().indices) {
-                                                Log.d(TAG, "token: ${tokens[j].asJsonObject}")
-                                                try {
-                                                    val token = tokens[j].asJsonObject
-                                                    val tokenData =
-                                                        token.get("TokenData").asJsonObject
-                                                    val displayClaims =
-                                                        tokenData.get("DisplayClaims").asJsonObject
-                                                    val xui = displayClaims.get("xui").asJsonArray
-                                                    for (k in xui.toList().indices) {
-                                                        try {
-                                                            val xuiObj = xui[k].asJsonObject
-                                                            val gtg = xuiObj.get("gtg").asString
-                                                            Log.d(TAG, "gtg: $gtg")
-                                                            if (gtg.isNotEmpty()) {
-                                                                runOnUiThread {
-                                                                    mainAccountName.text = gtg
-                                                                    mainLoginMethod.setText(R.string.microsoft_account)
-                                                                }
-                                                                XboxAPI.getSimpleProfileByName(
-                                                                    gtg,
-                                                                    object :
-                                                                        HttpUtils.HttpCallback {
-                                                                        override fun onSuccess(
-                                                                            code: Int,
-                                                                            body: String
-                                                                        ) {
-                                                                            try {
-                                                                                val jsonObject =
-                                                                                    Gson().fromJson(
-                                                                                        body,
-                                                                                        JsonObject::class.java
-                                                                                    )
-                                                                                        .get("people").asJsonArray[0].asJsonObject
-                                                                                val avatar =
-                                                                                    jsonObject.get("displayPicRaw").asString
-                                                                                runOnUiThread {
-                                                                                    Glide.with(self)
-                                                                                        .load(avatar)
-                                                                                        .into(
-                                                                                            mainAccountIcon
-                                                                                        )
-                                                                                }
-                                                                            } catch (e: Exception) {
-                                                                                Log.w(TAG, e)
-                                                                            }
-                                                                        }
-
-                                                                        override fun onError(error: String) {
-                                                                            Log.w(TAG, error)
-                                                                        }
-                                                                    })
-                                                                return@Thread
-                                                            }
-                                                        } catch (e: Exception) {
-                                                            Log.w(TAG, e)
-                                                        }
-                                                    }
-                                                } catch (e: Exception) {
-                                                    Log.w(TAG, e)
-                                                }
-                                            }
-                                        } catch (e: Exception) {
-                                            Log.w(TAG, e)
-                                        }
-                                    }
-                                }.start()
-                            }
-
-                            override fun onSearchError(error: Throwable) {
-                                // Handle error
-                            }
-                        }
-                    )
-                } catch (e: Exception) {
-                    Log.e(TAG, e)
-                }
-            }
-        }
-    }
-
     private fun findViewWithTag(tag: String): View {
         return window.decorView.findViewWithTag(tag)!!
+    }
+
+    private fun switchFragment(string: String) {
+        val fragment = fragments[string]
+        if (fragment != null && string != currentFragmentName) {
+            layoutContainer.removeAllViews()
+            fragment.init()
+            layoutContainer.addView(fragment.layout)
+            currentFragmentName = string
+        }
     }
 }
