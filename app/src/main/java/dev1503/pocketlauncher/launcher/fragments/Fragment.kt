@@ -4,7 +4,7 @@ import android.content.Context
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
-import dev1503.Log
+import dev1503.pocketlauncher.Log
 
 open class Fragment (val self: AppCompatActivity, val layout: ViewGroup, val fragmentName: String) {
     val context: Context = layout.context

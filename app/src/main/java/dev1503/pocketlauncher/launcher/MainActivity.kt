@@ -7,23 +7,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.bumptech.glide.Glide
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.gson.Gson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
-import dev1503.Log
-import dev1503.pocketlauncher.HttpUtils
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
-import dev1503.pocketlauncher.XboxAPI
 import dev1503.pocketlauncher.launcher.fragments.Fragment
+import dev1503.pocketlauncher.launcher.fragments.FragmentDownload
 import dev1503.pocketlauncher.launcher.fragments.FragmentMain
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Single
-import io.reactivex.rxjava3.schedulers.Schedulers
-import java.io.File
-import java.lang.Thread;
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -33,7 +22,6 @@ class MainActivity : AppCompatActivity() {
     private val self: MainActivity = this
     private lateinit var contentView: ViewGroup
     private lateinit var layoutContainer: ViewGroup
-    private lateinit var layoutMain: ViewGroup
 
     // Title bar elements
     private lateinit var titleBarIcon: ImageView
@@ -43,7 +31,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var titleBarTitle: TextView
 
     // Fragment
-    private lateinit var fragments: MutableMap<String, Fragment>
+    private var fragments: MutableMap<String, Fragment> = mutableMapOf()
     private var currentFragmentName: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -56,16 +44,25 @@ class MainActivity : AppCompatActivity() {
 
     private fun initLayouts() {
         initTitleBar()
-        fragments = mutableMapOf()
+        fragments.put("main",
+            FragmentMain(
+                self
+            )
+        )
 
-        layoutMain = View.inflate(self, R.layout.layout_launcher_main, null) as ViewGroup
-        fragments.put("main", FragmentMain(self, layoutMain))
+//        fragments.put("download",
+//            FragmentDownload(
+//                self,
+//                View.inflate(self, R.layout.layout_launcher_download, null) as ViewGroup
+//            )
+//        )
+
 
         switchFragment("main")
 
-        findViewWithTag("main_action_download").setOnClickListener { v ->
-            switchFragment("download");
-        }
+//        findViewWithTag("main_action_download").setOnClickListener { v ->
+//            switchFragment("download");
+//        }
 
         Utils.setAllTextColor(
             contentView,

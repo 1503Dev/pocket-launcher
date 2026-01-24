@@ -1,4 +1,4 @@
-package dev1503;
+package dev1503.pocketlauncher;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

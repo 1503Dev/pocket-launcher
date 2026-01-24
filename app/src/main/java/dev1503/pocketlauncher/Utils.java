@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import dev1503.Log;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -40,7 +39,7 @@ public class Utils {
             if (view instanceof ViewGroup) {
                 setAllTextColor((ViewGroup) view, color);
             } else if (view instanceof TextView) {
-                if (view.getTag() != null && view.getTag().equals("main_login_method")) {
+                if (view.getTag() != null && view.getTag().equals("description")) {
                     continue;
                 }
                 ((TextView) view).setTextColor(color);
@@ -157,6 +156,10 @@ public class Utils {
             Log.e(TAG, e);
             return null;
         }
+    }
+    public static int dp2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
     }
 
     public interface FilesSearchWithContentListener {

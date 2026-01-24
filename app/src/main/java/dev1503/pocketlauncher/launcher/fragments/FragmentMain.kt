@@ -1,138 +1,135 @@
 package dev1503.pocketlauncher.launcher.fragments
 
 import android.annotation.SuppressLint
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.gson.Gson
-import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import dev1503.Log
+import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.HttpUtils
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.XboxAPI
 import dev1503.pocketlauncher.launcher.MainActivity.Companion.TAG
-import io.reactivex.rxjava3.core.Single
+import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
 import java.io.File
 
-class FragmentMain (self: AppCompatActivity, layout: ViewGroup) : Fragment(self, layout, "FragmentMain") {
-    private lateinit var mainAccountName: TextView
-    private lateinit var mainLoginMethod: TextView
-    private lateinit var mainAccountIcon: ImageView
+class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self), "FragmentMain") {
+    private lateinit var itemAccount: ColumnLayout.ColumnLayoutItem
+
+
+    private val columnLayout: ColumnLayout = layout as ColumnLayout
 
     @Override
     override fun init() {
         super.init()
-        mainAccountName = findViewWithTag("main_account_name") as TextView
-        mainLoginMethod = findViewWithTag("main_login_method") as TextView
-        mainAccountIcon = findViewWithTag("main_account_icon") as ImageView
+
+        columnLayout.addDivider(self.getString(R.string.accounts))
+        itemAccount = columnLayout.addItem(
+            self.getString(R.string.accounts),
+            R.drawable.person_24px,
+            self.getString(R.string.not_logged_in)
+        )
+        columnLayout.addDivider(self.getString(R.string.games))
+        columnLayout.addItem(
+            self.getString(R.string.download),
+            R.drawable.download_24px,
+        )
+
+        columnLayout.setContentLayout(View.inflate(self, R.layout.layout_launcher_main, null) as ViewGroup)
+
         initMsAccount()
     }
-
     @SuppressLint("CheckResult")
     private fun initMsAccount() {
-        mainAccountIcon.setImageResource(R.drawable.person_24px)
-        mainAccountName.setText(R.string.accounts)
-        mainLoginMethod.setText(R.string.not_logged_in)
+        itemAccount.setIconBig(R.drawable.person_24px)
+        itemAccount.setTitle(self.getString(R.string.accounts))
+        itemAccount.setDescription(self.getString(R.string.not_logged_in))
 
-        val single: Single<*>? = Utils.getCurrentXalIdRx(context)
-        single?.subscribe { str ->
-            if (str != null) {
-                try {
-                    val jsonObject = Gson().fromJson(str as String, JsonObject::class.java)
-                    val id = jsonObject.get("default").asString
-                    Utils.searchFilesWithContent(
-                        Utils.getXalDirPath(self),
-                        id,
-                        object : Utils.FilesSearchWithContentListener {
-                            override fun onSearchComplete(files: List<File>, fileContents: List<String>) {
-                                Thread {
-                                    for (i in files.indices) {
-                                        try {
-                                            val content = fileContents[i]
-                                            val jsonObject =
-                                                Gson().fromJson(content, JsonObject::class.java)
-                                            val tokens: JsonArray = jsonObject.get("tokens").asJsonArray
-                                            for (j in tokens.toList().indices) {
-                                                Log.d(TAG, "token: ${tokens[j].asJsonObject}")
-                                                try {
-                                                    val token = tokens[j].asJsonObject
-                                                    val tokenData =
-                                                        token.get("TokenData").asJsonObject
-                                                    val displayClaims =
-                                                        tokenData.get("DisplayClaims").asJsonObject
-                                                    val xui = displayClaims.get("xui").asJsonArray
-                                                    for (k in xui.toList().indices) {
-                                                        try {
-                                                            val xuiObj = xui[k].asJsonObject
-                                                            val gtg = xuiObj.get("gtg").asString
-                                                            Log.d(TAG, "gtg: $gtg")
-                                                            if (gtg.isNotEmpty()) {
-                                                                uiRun {
-                                                                    mainAccountName.text = gtg
-                                                                    mainLoginMethod.setText(R.string.microsoft_account)
-                                                                }
-                                                                XboxAPI.getSimpleProfileByName(
-                                                                    gtg,
-                                                                    object :
-                                                                        HttpUtils.HttpCallback {
-                                                                        override fun onSuccess(
-                                                                            code: Int,
-                                                                            body: String
-                                                                        ) {
-                                                                            try {
-                                                                                val jsonObject =
-                                                                                    Gson().fromJson(
-                                                                                        body,
-                                                                                        JsonObject::class.java
-                                                                                    )
-                                                                                        .get("people").asJsonArray[0].asJsonObject
-                                                                                val avatar =
-                                                                                    jsonObject.get("displayPicRaw").asString
-                                                                                uiRun {
-                                                                                    Glide.with(self)
-                                                                                        .load(avatar)
-                                                                                        .into(
-                                                                                            mainAccountIcon
-                                                                                        )
-                                                                                }
-                                                                            } catch (e: Exception) {
-                                                                                Log.w(TAG, e)
-                                                                            }
-                                                                        }
+        Utils.getCurrentXalIdRx(context)?.subscribe { xalId ->
+            if (xalId == null) return@subscribe
 
-                                                                        override fun onError(error: String) {
-                                                                            Log.w(TAG, error)
-                                                                        }
-                                                                    })
-                                                                return@Thread
-                                                            }
-                                                        } catch (e: Exception) {
-                                                            Log.w(TAG, e)
-                                                        }
+            try {
+                val jsonObject = Gson().fromJson(xalId as String, JsonObject::class.java)
+                val id = jsonObject["default"].asString
+
+                Utils.searchFilesWithContent(
+                    Utils.getXalDirPath(self),
+                    id,
+                    object : Utils.FilesSearchWithContentListener {
+                        override fun onSearchComplete(files: List<File>, fileContents: List<String>) {
+                            fun extractGamerTag(): String? {
+                                for (content in fileContents) {
+                                    try {
+                                        val contentJson = Gson().fromJson(content, JsonObject::class.java)
+                                        val tokens = contentJson["tokens"].asJsonArray
+
+                                        for (tokenElement in tokens) {
+                                            try {
+                                                val tokenData = tokenElement.asJsonObject["TokenData"].asJsonObject
+                                                val displayClaims = tokenData["DisplayClaims"].asJsonObject
+                                                val xuiArray = displayClaims["xui"].asJsonArray
+
+                                                for (xuiElement in xuiArray) {
+                                                    val gtg = xuiElement.asJsonObject["gtg"].asString
+                                                    if (gtg.isNotEmpty()) {
+                                                        return gtg
                                                     }
-                                                } catch (e: Exception) {
-                                                    Log.w(TAG, e)
                                                 }
+                                            } catch (e: Exception) {
+                                                continue
                                             }
-                                        } catch (e: Exception) {
-                                            Log.w(TAG, e)
                                         }
+                                    } catch (e: Exception) {
+                                        continue
                                     }
-                                }.start()
+                                }
+                                return null
                             }
 
-                            override fun onSearchError(error: Throwable) {
-                                // Handle error
+                            val gamerTag = extractGamerTag()
+                            if (gamerTag.isNullOrEmpty()) return
+
+                            uiRun {
+                                itemAccount.setTitle(gamerTag)
+                                itemAccount.setDescription(self.getString(R.string.microsoft_account))
                             }
+
+                            XboxAPI.getSimpleProfileByName(gamerTag, object : HttpUtils.HttpCallback {
+                                override fun onSuccess(code: Int, body: String) {
+                                    try {
+                                        val profileJson = Gson().fromJson(body, JsonObject::class.java)
+                                        val peopleArray = profileJson["people"].asJsonArray
+                                        if (peopleArray.size() > 0) {
+                                            val avatarUrl = peopleArray[0].asJsonObject["displayPicRaw"].asString
+                                            uiRun {
+                                                Glide.with(self)
+                                                    .load(avatarUrl)
+                                                    .into(itemAccount.iconView)
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.w(TAG, "Failed to parse profile", e)
+                                    }
+                                }
+
+                                override fun onError(error: String) {
+                                    Log.w(TAG, "Failed to get profile: $error")
+                                }
+                            })
                         }
-                    )
-                } catch (e: Exception) {
-                    Log.e(TAG, e)
-                }
+
+                        override fun onSearchError(error: Throwable) {
+                            Log.e(TAG, "Search error", error)
+                        }
+                    }
+                )
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to parse XAL ID", e)
             }
         }
     }
