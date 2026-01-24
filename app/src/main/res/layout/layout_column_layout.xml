@@ -8,6 +8,7 @@
         android:layout_width="200dp"
         android:layout_height="match_parent"
         android:background="@color/black_50p"
+        android:tag="layout_left"
         android:fillViewport="true"
         android:paddingTop="4dp"
         android:paddingBottom="12dp">

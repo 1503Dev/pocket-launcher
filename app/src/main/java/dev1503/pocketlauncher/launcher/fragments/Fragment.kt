@@ -10,14 +10,15 @@ open class Fragment (val self: AppCompatActivity, val layout: ViewGroup, val fra
     val context: Context = layout.context
     var isInit: Boolean = false
 
-    open fun init() {
-        if (isInit) return
+    open fun init(): Boolean {
+        if (isInit) return false
         layout.layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
         )
         Log.i(fragmentName, "Init")
         isInit = true
+        return true
     }
 
     fun findViewWithTag(tag: String): View {

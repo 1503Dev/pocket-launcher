@@ -3,8 +3,6 @@ package dev1503.pocketlauncher.launcher.fragments
 import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.gson.Gson
@@ -14,19 +12,19 @@ import dev1503.pocketlauncher.HttpUtils
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.XboxAPI
+import dev1503.pocketlauncher.launcher.MainActivity
 import dev1503.pocketlauncher.launcher.MainActivity.Companion.TAG
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
 import java.io.File
 
 class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self), "FragmentMain") {
     private lateinit var itemAccount: ColumnLayout.ColumnLayoutItem
-
-
-    private val columnLayout: ColumnLayout = layout as ColumnLayout
+    private val activity: MainActivity = self as MainActivity
+    val columnLayout: ColumnLayout = layout as ColumnLayout
 
     @Override
-    override fun init() {
-        super.init()
+    override fun init(): Boolean {
+        if (!super.init()) return false
 
         columnLayout.addDivider(self.getString(R.string.accounts))
         itemAccount = columnLayout.addItem(
@@ -38,12 +36,16 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         columnLayout.addItem(
             self.getString(R.string.download),
             R.drawable.download_24px,
-        )
+        ).setOnClickListener {
+            activity.switchFragment("download")
+        }
 
         columnLayout.setContentLayout(View.inflate(self, R.layout.layout_launcher_main, null) as ViewGroup)
 
         initMsAccount()
+        return true
     }
+
     @SuppressLint("CheckResult")
     private fun initMsAccount() {
         itemAccount.setIconBig(R.drawable.person_24px)
@@ -54,7 +56,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
             if (xalId == null) return@subscribe
 
             try {
-                val jsonObject = Gson().fromJson(xalId as String, JsonObject::class.java)
+                val jsonObject = Gson().fromJson(xalId, JsonObject::class.java)
                 val id = jsonObject["default"].asString
 
                 Utils.searchFilesWithContent(

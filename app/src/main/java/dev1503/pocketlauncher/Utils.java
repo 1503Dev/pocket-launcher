@@ -3,6 +3,8 @@ package dev1503.pocketlauncher;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -160,6 +162,9 @@ public class Utils {
     public static int dp2px(Context context, float dpValue) {
         final float scale = context.getResources().getDisplayMetrics().density;
         return (int) (dpValue * scale + 0.5f);
+    }
+    public static void setTimeout(Runnable runnable, long timeout) {
+        new Handler(Looper.getMainLooper()).postDelayed(runnable, timeout);
     }
 
     public interface FilesSearchWithContentListener {
