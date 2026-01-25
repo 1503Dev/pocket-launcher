@@ -1,21 +1,144 @@
 package dev1503.pocketlauncher.launcher.fragments
 
+import android.content.pm.PackageInfo
+import android.os.Build
 import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
+import com.google.gson.JsonObject
+import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
+import dev1503.pocketlauncher.Utils
+import dev1503.pocketlauncher.launcher.dialogs.DialogLoading
+import dev1503.pocketlauncher.launcher.pickers.PackagePicker
+import dev1503.pocketlauncher.launcher.pickers.TextPicker
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.io.File
 
 class FragmentDownload (self: AppCompatActivity) : Fragment(self, ColumnLayout(self), "FragmentDownload") {
+    val TAG = "FragmentDownload"
     val columnLayout: ColumnLayout = layout as ColumnLayout
+
+    lateinit var itemGames: ColumnLayout.ColumnLayoutItem
 
     @Override
     override fun init(): Boolean {
-        if (!super.init()) return false
+        val superResult = super.init()
 
-        columnLayout.addDivider(self.getString(R.string.new_game))
-        columnLayout.addItem(self.getString(R.string.games), R.drawable.stadia_controller_24px)
+        if (superResult) {
+            columnLayout.addDivider(self.getString(R.string.new_game))
+            itemGames = columnLayout.addItem(self.getString(R.string.games), R.drawable.stadia_controller_24px, true)
 
-        return true
+            columnLayout.setContentLayout(R.layout.layout_launcher_download_games)
+            val btnInstallFromDeviceInstalled = columnLayout.findViewWithTag<View>("btn_install_from_device_installed")
+            btnInstallFromDeviceInstalled.setOnClickListener {
+                installFromDeviceInstalled()
+            }
+        }
+        itemGames.checked = true
+
+        return superResult
+    }
+
+    fun installFromDeviceInstalled() {
+        val packageInfoList = Utils.getAllMCPossiblePackages(self)
+        if (packageInfoList == null) {
+            Snackbar.make(layout, "Error", Snackbar.LENGTH_SHORT).show()
+            return
+        }
+        PackagePicker(self, packageInfoList).apply {
+            onPackageSelected = { packageInfo ->
+                val appName = packageInfo.applicationInfo?.loadLabel(self.packageManager).toString()
+                val appVersion = packageInfo.versionName
+                TextPicker(self, self.getString(R.string.instance_name), "${appName} v${appVersion}".trim()).apply {
+                    onInputFinish = { instanceName ->
+                        if (!Utils.testFileName(instanceName)) {
+                            Snackbar.make(layout, self.getString(R.string.invalid_instance_name), Snackbar.LENGTH_LONG).show()
+                        } else if (Utils.isInstanceExist(context, instanceName)) {
+                            Snackbar.make(layout, self.getString(R.string.instance_name_is_used), Snackbar.LENGTH_LONG).show()
+                        } else {
+                            installFromDeviceInstalled(packageInfo, instanceName)
+                        }
+                    }
+                }.show()
+            }
+        }.show()
+    }
+
+    fun installFromDeviceInstalled(packageInfo: PackageInfo, instanceName: String) {
+        val versionName = packageInfo.versionName
+        var versionCode: Long = 0
+        if (Build.VERSION.SDK_INT >= 28) {
+            versionCode = packageInfo.longVersionCode
+        } else versionCode = packageInfo.versionCode.toLong()
+        val dialogLoading = DialogLoading(
+            self, self.getString(R.string.installing),
+            indicatorType = DialogLoading.TYPE_LINEAR_DETERMINATE_PROGRESS
+        ).init()
+        dialogLoading.progress = 0
+        dialogLoading.text = self.getString(R.string.init_installation_program)
+        dialogLoading.show()
+        var lastProgress = -1
+        self.lifecycleScope.launch (Dispatchers.IO) {
+            val root = Utils.getInstancesDirPath(context) + instanceName
+            File(root).mkdirs()
+            val destPath = "$root/entity.apk"
+            uiRun { dialogLoading.progress = 1 }
+            Utils.copyFile(packageInfo.applicationInfo?.publicSourceDir, destPath, { progress, copiedSize, totalSize ->
+                if (progress >= 100) {
+                    uiRun {
+                        dialogLoading.progress = 99
+                        dialogLoading.text = self.getString(R.string.creating_manifest)
+                    }
+                    try {
+                        val manifest = JsonObject()
+                        manifest.addProperty("version", 1)
+                        val manifestInstance = JsonObject()
+                        manifestInstance.addProperty("type", "full_apk")
+                        manifestInstance.addProperty("entity", "entity.apk")
+                        manifestInstance.addProperty("version_name",versionName)
+                        manifestInstance.addProperty("version_code",versionCode)
+                        manifestInstance.addProperty("install_time",System.currentTimeMillis())
+                        manifestInstance.addProperty("source", "device_installed")
+                        manifest.add("instance", manifestInstance)
+
+                        val config = JsonObject()
+                        config.addProperty("version", 1)
+                        config.addProperty("data_isolation", true)
+                        if (Utils.fileWriteString("$root/manifest.json", manifest.toString()) &&
+                            Utils.fileWriteString("$root/config.json", config.toString()) &&
+                            File(destPath).exists()) {
+                            uiRun {
+                                dialogLoading.cancel()
+                                MaterialAlertDialogBuilder(self)
+                                    .setTitle(R.string.install_success)
+                                    .setNegativeButton(R.string.ok, { dialog, which -> })
+                                    .show()
+                            }
+                            return@copyFile
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, e)
+                    }
+                    uiRun {
+                        dialogLoading.cancel()
+                        MaterialAlertDialogBuilder(self)
+                            .setTitle(R.string.install_failed)
+                            .setNegativeButton(R.string.ok, { dialog, which -> })
+                            .show()
+                    }
+                } else if (progress != lastProgress) {
+                    uiRun {
+                        dialogLoading.progress = 1 + (progress / 100f * 98).toInt()
+                        dialogLoading.text = self.getString(R.string.copying) + " ${copiedSize/1024/1024} MB/${totalSize/1024/1024} MB"
+                    }
+                }
+                lastProgress = progress
+            })
+        }
     }
 }

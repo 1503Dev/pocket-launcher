@@ -1,0 +1,79 @@
+package dev1503.pocketlauncher.launcher.dialogs
+
+import android.widget.LinearLayout
+import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import dev1503.pocketlauncher.R
+import dev1503.pocketlauncher.Utils.dp2px
+
+class DialogLoading(val activity: AppCompatActivity, val title: String, val indicatorType: Int, val cancelable: Boolean = false) {
+    companion object {
+        const val TYPE_LINEAR_DETERMINATE_PROGRESS = 0
+        const val TYPE_LINEAR_INDETERMINATE_PROGRESS = 1
+        const val TYPE_CIRCULAR = 2
+    }
+
+    lateinit var layout: LinearLayout
+    lateinit var textView: TextView
+    lateinit var detailsTextView: TextView
+    lateinit var linearProgressIndicator: LinearProgressIndicator
+    lateinit var circularProgressIndicator: CircularProgressIndicator
+
+    var text: String = ""
+        set(value) {
+            field = value
+            textView.text = value
+        }
+    var details: String = ""
+        set(value) {
+            field = value
+            detailsTextView.text = value
+        }
+    var progress: Int = 0
+        set(value) {
+            field = value
+            linearProgressIndicator.progress = value
+        }
+    var onCancel: (() -> Unit)? = null
+
+    val dialogBuilder = MaterialAlertDialogBuilder(activity)
+        .setTitle(title)
+        .setCancelable(false)
+    lateinit var dialog: AlertDialog
+
+    fun init(): DialogLoading {
+        when (indicatorType) {
+            TYPE_LINEAR_DETERMINATE_PROGRESS -> {
+                layout = activity.layoutInflater.inflate(R.layout.dialog_loading_linear_deterministic_progress, null) as LinearLayout
+                textView = layout.findViewWithTag<TextView>("text")
+                linearProgressIndicator = layout.findViewWithTag<LinearProgressIndicator>("progress")
+            }
+        }
+        if (cancelable) {
+            dialogBuilder.setNeutralButton(R.string.cancel, { dialog, which ->
+                onCancel?.invoke()
+            })
+        } else {
+            layout.setPadding(
+                layout.paddingLeft,
+                layout.paddingTop,
+                layout.paddingRight,
+                dp2px(activity, 24f)
+            )
+        }
+        dialogBuilder.setView(layout)
+        return this
+    }
+
+    fun show() {
+        dialog = dialogBuilder.show()
+    }
+
+    fun cancel() {
+        dialog.cancel()
+    }
+}

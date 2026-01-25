@@ -3,6 +3,8 @@ package dev1503.pocketlauncher.launcher.widgets
 import android.animation.Animator
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.Typeface
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +12,7 @@ import android.view.ViewPropertyAnimator
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.RequiresApi
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
@@ -56,14 +59,20 @@ class ColumnLayout : LinearLayout {
         contentContainer.addView(view, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
     }
 
+    fun setContentLayout(layoutId: Int) {
+        contentContainer.removeAllViews()
+        contentContainer.addView(View.inflate(context, layoutId, null), LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+    }
+
     fun addDivider(text: CharSequence) {
         val divider = View.inflate(context, R.layout.layout_column_layout_divider, null)
         divider.findViewWithTag<TextView>("text")?.text = text
         itemsContainer.addView(divider, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
     }
 
-    fun addItem(name: String = "", icon: Int = 0, description: String = ""): ColumnLayoutItem {
+    fun addItem(name: String = "", icon: Int = 0, selectable: Boolean = false, description: String = ""): ColumnLayoutItem {
         val view = ColumnLayoutItem(context)
+        view.checkable = selectable
         view.setTitle(name)
         view.setDescription(description)
         if (description != "") {
@@ -120,8 +129,27 @@ class ColumnLayout : LinearLayout {
     }
 
     class ColumnLayoutItem: LinearLayout {
-        public val iconView: ImageView
+        val iconView: ImageView
             get() = findViewWithTag<ImageView>("icon")!!
+        val titleView: TextView
+            get() = findViewWithTag<TextView>("title")!!
+        var checked: Boolean = false
+            set(value) {
+                if (!checkable) return
+                if (value) {
+                    setBackgroundColor(Utils.applyAlpha(Utils.getColorFromAttr(context, androidx.appcompat.R.attr.colorPrimary), 0.2f))
+                    titleView.setTextColor(Utils.getColorFromAttr(context, androidx.appcompat.R.attr.colorPrimary))
+                    titleView.setTypeface(titleView.typeface, Typeface.BOLD)
+                    iconView.setColorFilter(Utils.getColorFromAttr(context, androidx.appcompat.R.attr.colorPrimary))
+                } else {
+                    setBackground(Utils.getDrawableFromAttr(context, android.R.attr.selectableItemBackground))
+                    titleView.setTextColor(Utils.getColorFromAttr(context, com.google.android.material.R.attr.colorOnPrimary))
+                    titleView.setTypeface(titleView.typeface, Typeface.NORMAL)
+                    iconView.setColorFilter(Utils.getColorFromAttr(context, com.google.android.material.R.attr.colorOnPrimary))
+                }
+            }
+        var checkable: Boolean = false
+        var onClick: OnClickListener? = null
 
         constructor(context: Context) : super(context) {
             init()
@@ -147,6 +175,12 @@ class ColumnLayout : LinearLayout {
         private fun init() {
             inflate(context, R.layout.layout_column_layout_item_card, this)
             orientation = HORIZONTAL
+            setOnClickListener {
+                if (checkable) {
+                    checked = true
+                }
+                onClick?.onClick(this)
+            }
         }
 
         fun setTitle(title: CharSequence) {
@@ -154,11 +188,11 @@ class ColumnLayout : LinearLayout {
         }
 
         fun setIcon(icon: Bitmap) {
-            iconView.layoutParams.height = Utils.dp2px(context, 32f)
+            iconView.layoutParams.height = Utils.dp2px(context, 28f)
             iconView.setImageBitmap(icon)
         }
         fun setIcon(icon: Int) {
-            iconView.layoutParams.height = Utils.dp2px(context, 32f)
+            iconView.layoutParams.height = Utils.dp2px(context, 28f)
             iconView.setImageResource(icon)
         }
         fun setIconBig(icon: Bitmap) {

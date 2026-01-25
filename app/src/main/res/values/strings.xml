@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">PocketLauncher</string>
+    <string name="app_name" translatable="false">PocketLauncher</string>
     <string name="back">Back</string>
     <string name="exit">Exit</string>
     <string name="minimize">Minimize</string>
@@ -13,4 +13,23 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="new_game">New Game</string>
+    <string name="install_from_device_installed">Install from packages installed on the device</string>
+    <string name="select_an_application">Select an application</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="instance_name">Instance Name</string>
+    <string name="installing">Installing</string>
+    <string name="copying">Copying</string>
+    <string name="install_success" >Install success</string>
+    <string name="install_failed">Install failed</string>
+    <string name="invalid_instance_name">Invalid instance name</string>
+    <string name="instance_name_is_used">Instance name is used</string>
+    <string name="init_installation_program">Initialize installation program</string>
+    <string name="creating_manifest">Creating manifest file</string>
+    <string name="no_instance_selected">No instance selected</string>
+    <string name="no_instance_installed">No instance installed</string>
+    <string name="check_instance">Check instance</string>
+    <string name="load_mods">Load mods</string>
+    <string name="launch_failed">Launch failed</string>
+    <string name="failed_to_check_instance">Failed to check instance</string>
 </resources>

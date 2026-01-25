@@ -11,6 +11,7 @@ import android.window.OnBackInvokedDispatcher
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import dev1503.pocketlauncher.KVConfig
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.launcher.fragments.Fragment
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         contentView = View.inflate(self, R.layout.activity_launcher, null) as ViewGroup
         setContentView(contentView)
+        Utils.kvConfig = KVConfig(self, "config.json")
         layoutContainer = findViewWithTag("container") as ViewGroup
         initLayouts()
 
@@ -63,11 +65,6 @@ class MainActivity : AppCompatActivity() {
         fragments.put("download", FragmentDownload(self))
 
         switchFragment("main")
-
-        Utils.setAllTextColor(
-            contentView,
-            Utils.getColorFromAttr(self, com.google.android.material.R.attr.colorOnPrimary)
-        )
     }
 
     @SuppressLint("SetTextI18n")

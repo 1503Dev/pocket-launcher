@@ -8,6 +8,7 @@ core = "1.17.0"
 constraintlayout = "2.2.1"
 kotlin = "2.2.0"
 coreKtx = "1.17.0"
+material3 = "1.4.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -17,6 +18,7 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 core = { group = "androidx.core", name = "core", version.ref = "core" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -24,6 +24,7 @@
             android:exported="true"
             android:theme="@style/Theme.PocketLauncher.Launcher.Main"
             android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode|screenLayout|smallestScreenSize"
             tools:ignore="DiscouragedApi">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

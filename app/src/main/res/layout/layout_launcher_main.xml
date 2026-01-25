@@ -18,22 +18,25 @@
             android:layout_weight="1"
             android:background="?attr/selectableItemBackground"
             android:orientation="vertical"
-            android:clickable="true"
+            android:tag="btn_launch"
             android:gravity="center">
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:textColor="?attr/colorOnPrimary"
                 android:text="@string/launch_game"
                 android:textSize="16dp"/>
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Instance Name" />
+                android:tag="instance_name"
+                android:textColor="?attr/colorOnPrimary"
+                android:text="@string/no_instance_selected" />
         </LinearLayout>
         <LinearLayout
             android:layout_width="24dp"
-            android:clickable="true"
             android:layout_height="match_parent"
+            android:tag="btn_select_instance"
             android:background="?attr/selectableItemBackground">
             <ImageView
                 android:layout_width="wrap_content"
