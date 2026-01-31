@@ -1,6 +1,6 @@
 package dev1503.pocketlauncher
 
-class InstanceInfo(
+open class InstanceInfo(
     val name: String?,
     val versionName: String,
     val versionCode: Long,
@@ -8,7 +8,7 @@ class InstanceInfo(
     val source: String,
     val dirPath: String,
     val entityType: String,
-    val entityRelativePath: String,
+    val entity: String
 ) {
 
 }

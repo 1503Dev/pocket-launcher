@@ -21,10 +21,14 @@ import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okio.Buffer
+import okio.FileSystem
+import okio.Path.Companion.toPath
 import okio.buffer
 import okio.sink
 import okio.source
 import java.io.File
+import java.io.FileInputStream
+import java.security.MessageDigest
 import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.roundToInt
@@ -314,6 +318,8 @@ object Utils {
         destPath: String,
         onProgress: (Int, Long, Long) -> Unit
     ) {
+        requireNotNull(sourcePath) { "Source path cannot be null" }
+
         val sourceFile = File(sourcePath)
         val destFile = File(destPath)
 
@@ -325,25 +331,38 @@ object Utils {
 
         val totalSize = sourceFile.length()
         var copiedSize: Long = 0
+        var lastProgress = -1
+        var lastUpdateTime = 0L
+        val updateInterval = 50L
 
-        sourceFile.source().use { source ->
-            destFile.sink().use { sink ->
-                val buffer = Buffer()
+        sourceFile.inputStream().use { input ->
+            destFile.outputStream().use { output ->
+                val buffer = ByteArray(8192)
 
                 while (true) {
-                    val bytesRead = source.read(buffer, 8192)
-                    if (bytesRead == -1L) break
+                    val bytesRead = input.read(buffer)
+                    if (bytesRead == -1) break
 
-                    sink.write(buffer, bytesRead)
+                    output.write(buffer, 0, bytesRead)
                     copiedSize += bytesRead
 
-                    val progress = if (totalSize > 0) {
-                        (copiedSize.toFloat() / totalSize * 100).toInt()
-                    } else 0
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastUpdateTime >= updateInterval) {
+                        val progress = if (totalSize > 0) {
+                            (copiedSize.toFloat() / totalSize * 100).toInt()
+                        } else 0
 
-                    withContext(Dispatchers.Main){
-                        onProgress(progress, copiedSize, totalSize)
+                        if (progress != lastProgress) {
+                            withContext(Dispatchers.Main.immediate) {
+                                onProgress(progress, copiedSize, totalSize)
+                            }
+                            lastProgress = progress
+                            lastUpdateTime = currentTime
+                        }
                     }
+                }
+                withContext(Dispatchers.Main.immediate) {
+                    onProgress(100, totalSize, totalSize)
                 }
             }
         }
@@ -381,7 +400,6 @@ object Utils {
                 val installTime = mInstance.get("install_time").asLong
                 val source = mInstance.get("source").asString
                 val entityType = mInstance.get("type").asString
-                val entityRelativePath = mInstance.get("entity").asString
                 instances.add(
                     InstanceInfo(
                         name,
@@ -391,7 +409,7 @@ object Utils {
                         source,
                         instanceDir.absolutePath + "/",
                         entityType,
-                        entityRelativePath
+                        mInstance.get("entity").asString
                     )
                 )
             } catch (e: Exception) {
@@ -414,7 +432,7 @@ object Utils {
             val installTime = mInstance.get("install_time").asLong
             val source = mInstance.get("source").asString
             val entityType = mInstance.get("type").asString
-            val entityRelativePath = mInstance.get("entity").asString
+            val entity = mInstance.get("entity").asString
             return InstanceInfo(
                 name,
                 versionName,
@@ -423,12 +441,86 @@ object Utils {
                 source,
                 instanceDir.absolutePath + "/",
                 entityType,
-                entityRelativePath
+                entity
             )
         } catch (e: Exception) {
             Log.e(TAG, e)
         }
         return null
+    }
+    fun bytesToHex(bytes: ByteArray): String {
+        val hexChars = CharArray(bytes.size * 2)
+        for (i in bytes.indices) {
+            val v = bytes[i].toInt() and 0xFF
+            hexChars[i * 2] = "0123456789ABCDEF"[v ushr 4]
+            hexChars[i * 2 + 1] = "0123456789ABCDEF"[v and 0x0F]
+        }
+        return String(hexChars)
+    }
+    fun fileSHA1(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-1")
+        FileInputStream(file).use { fis ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+            }
+        }
+        return bytesToHex(digest.digest())
+    }
+    fun fileSHA1(filePath: String?): String {
+        return fileSHA1(File(filePath))
+    }
+    fun fileSHA1(file: File, progressCallback: ((progress: Float) -> Unit)? = null): String {
+        val digest = MessageDigest.getInstance("SHA-1")
+        val fileSize = file.length().toFloat()
+        var bytesProcessed = 0L
+
+        FileInputStream(file).use { fis ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+
+            while (fis.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+                bytesProcessed += bytesRead
+                progressCallback?.invoke(bytesProcessed / fileSize)
+            }
+        }
+
+        return bytesToHex(digest.digest())
+    }
+    fun fileSHA1(filePath: String?, progressCallback: ((Float) -> Unit)? = null): String {
+        return fileSHA1(File(filePath), progressCallback)
+    }
+    fun getInstanceEntitiesDirPath(context: Context, type: String): String {
+        return getDataDirPath(context) + "instance_entities/$type/"
+    }
+    fun isInstanceEntityExist(context: Context, type: String, entity: String, suffix: String = type): Boolean {
+        val instanceEntitiesDir = File(getInstanceEntitiesDirPath(context, type))
+        if (!instanceEntitiesDir.exists()) return false
+        val entityFile = File(instanceEntitiesDir, entity + (if (suffix.isNotEmpty()) ".${suffix.lowercase()}" else ""))
+        return entityFile.exists() && entityFile.isFile
+
+    }
+    fun fileRemove(file: File) {
+        val path = file.absolutePath.toPath()
+
+        if (file.isDirectory) {
+            FileSystem.SYSTEM.listOrNull(path)?.forEach { childPath ->
+                val childFile = File(childPath.toString())
+                if (childFile.exists()) {
+                    fileRemove(childFile)
+                }
+            }
+        }
+        try {
+            FileSystem.SYSTEM.delete(path, mustExist = false)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+    fun fileRemove(path: String) {
+        fileRemove(File(path))
     }
 
     interface FilesSearchWithContentListener {

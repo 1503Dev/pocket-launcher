@@ -215,8 +215,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
             .setView(dialogView)
             .setCancelable(true)
             .show()
-        if (!File(instanceInfo.dirPath + instanceInfo.entityRelativePath).exists() ||
-            !File(instanceInfo.dirPath + instanceInfo.entityRelativePath).isFile ||
+        if (!Utils.isInstanceEntityExist(self, "apk", instanceInfo.entity) ||
             !File(instanceInfo.dirPath + "manifest.json").exists() ||
             !File(instanceInfo.dirPath + "manifest.json").isFile){
             dialog.dismiss()

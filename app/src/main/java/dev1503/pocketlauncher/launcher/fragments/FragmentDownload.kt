@@ -18,6 +18,8 @@ import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.Locale
+import java.util.Locale.getDefault
 
 class FragmentDownload (self: AppCompatActivity) : Fragment(self, ColumnLayout(self), "FragmentDownload") {
     val TAG = "FragmentDownload"
@@ -86,10 +88,17 @@ class FragmentDownload (self: AppCompatActivity) : Fragment(self, ColumnLayout(s
         self.lifecycleScope.launch (Dispatchers.IO) {
             val root = Utils.getInstancesDirPath(context) + instanceName
             File(root).mkdirs()
-            val destPath = "$root/entity.apk"
-            uiRun { dialogLoading.progress = 1 }
-            Utils.copyFile(packageInfo.applicationInfo?.publicSourceDir, destPath, { progress, copiedSize, totalSize ->
-                if (progress >= 100) {
+            val sourcePath = packageInfo.applicationInfo?.publicSourceDir
+            dialogLoading.text = self.getString(R.string.verifying_entity_files)
+            val sourceSha1 = Utils.fileSHA1(sourcePath, { progress ->
+                        uiRun {
+                            dialogLoading.progress = (progress * 20).toInt()
+                        }
+                    }).lowercase(getDefault())
+            Log.i(TAG, "sourcePath: $sourcePath, sourceSha1: $sourceSha1")
+
+            fun installFinish(failed: Boolean = false) {
+                if (!failed) {
                     uiRun {
                         dialogLoading.progress = 99
                         dialogLoading.text = self.getString(R.string.creating_manifest)
@@ -99,7 +108,7 @@ class FragmentDownload (self: AppCompatActivity) : Fragment(self, ColumnLayout(s
                         manifest.addProperty("version", 1)
                         val manifestInstance = JsonObject()
                         manifestInstance.addProperty("type", "full_apk")
-                        manifestInstance.addProperty("entity", "entity.apk")
+                        manifestInstance.addProperty("entity", sourceSha1)
                         manifestInstance.addProperty("version_name",versionName)
                         manifestInstance.addProperty("version_code",versionCode)
                         manifestInstance.addProperty("install_time",System.currentTimeMillis())
@@ -111,7 +120,8 @@ class FragmentDownload (self: AppCompatActivity) : Fragment(self, ColumnLayout(s
                         config.addProperty("data_isolation", true)
                         if (Utils.fileWriteString("$root/manifest.json", manifest.toString()) &&
                             Utils.fileWriteString("$root/config.json", config.toString()) &&
-                            File(destPath).exists()) {
+                            Utils.isInstanceEntityExist(context, "apk", sourceSha1)
+                        ) {
                             uiRun {
                                 dialogLoading.cancel()
                                 MaterialAlertDialogBuilder(self)
@@ -119,26 +129,46 @@ class FragmentDownload (self: AppCompatActivity) : Fragment(self, ColumnLayout(s
                                     .setNegativeButton(R.string.ok, { dialog, which -> })
                                     .show()
                             }
-                            return@copyFile
+                            return
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, e)
                     }
-                    uiRun {
-                        dialogLoading.cancel()
-                        MaterialAlertDialogBuilder(self)
-                            .setTitle(R.string.install_failed)
-                            .setNegativeButton(R.string.ok, { dialog, which -> })
-                            .show()
-                    }
-                } else if (progress != lastProgress) {
-                    uiRun {
-                        dialogLoading.progress = 1 + (progress / 100f * 98).toInt()
-                        dialogLoading.text = self.getString(R.string.copying) + " ${copiedSize/1024/1024} MB/${totalSize/1024/1024} MB"
-                    }
                 }
-                lastProgress = progress
-            })
+                Log.e(TAG, "Failed to install")
+                Utils.fileRemove(root)
+                uiRun {
+                    dialogLoading.cancel()
+                    MaterialAlertDialogBuilder(self)
+                        .setTitle(R.string.install_failed)
+                        .setNegativeButton(R.string.ok, { dialog, which -> })
+                        .show()
+                }
+            }
+
+            if (Utils.isInstanceEntityExist(context, "apk", sourceSha1)) {
+                installFinish()
+                return@launch
+            }
+            val destPath = Utils.getInstanceEntitiesDirPath(context, "apk") + sourceSha1 + ".apk"
+            uiRun { dialogLoading.progress = 20 }
+            try {
+                Utils.copyFile(sourcePath, destPath, { progress, copiedSize, totalSize ->
+                    if (progress >= 100) {
+                        installFinish()
+                    } else if (progress != lastProgress) {
+                        uiRun {
+                            dialogLoading.progress = 20 + (progress / 100f * 79).toInt()
+                            dialogLoading.text = self.getString(R.string.copying) + " ${copiedSize/1024/1024} MB/${totalSize/1024/1024} MB"
+                        }
+                    }
+                    lastProgress = progress
+                })
+            } catch (e: Exception) {
+                Log.e(TAG, e)
+                installFinish(true)
+                Utils.fileRemove(destPath)
+            }
         }
     }
 }
