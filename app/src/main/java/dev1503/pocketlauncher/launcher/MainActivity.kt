@@ -46,6 +46,16 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         contentView = View.inflate(self, R.layout.activity_launcher, null) as ViewGroup
         setContentView(contentView)
+
+        if (Build.VERSION.SDK_INT <= 27) {
+            MaterialAlertDialogBuilder(self)
+                .setTitle(R.string.unsupported_android_system)
+                .setMessage(getString(R.string.android_system_version_not_supported, Build.VERSION.RELEASE, Build.VERSION.SDK_INT.toString()))
+                .setCancelable(false)
+                .show()
+            return
+        }
+
         Utils.kvConfig = KVConfig(self, "config.json")
         layoutContainer = findViewWithTag("container") as ViewGroup
         initLayouts()

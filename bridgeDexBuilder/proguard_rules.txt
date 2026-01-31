@@ -1,0 +1,5 @@
+-dontwarn 
+-ignorewarnings 
+-keepattributes *Annotation* 
+-keep class com.yourpackage.** { *; } 
+-keep class com.yourpackage.** { *; } 

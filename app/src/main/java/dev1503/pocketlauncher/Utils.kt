@@ -28,6 +28,8 @@ import okio.sink
 import okio.source
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.InputStream
 import java.security.MessageDigest
 import java.util.*
 import java.util.regex.Pattern
@@ -500,7 +502,6 @@ object Utils {
         if (!instanceEntitiesDir.exists()) return false
         val entityFile = File(instanceEntitiesDir, entity + (if (suffix.isNotEmpty()) ".${suffix.lowercase()}" else ""))
         return entityFile.exists() && entityFile.isFile
-
     }
     fun fileRemove(file: File) {
         val path = file.absolutePath.toPath()
@@ -521,6 +522,22 @@ object Utils {
     }
     fun fileRemove(path: String) {
         fileRemove(File(path))
+    }
+    fun getDirIPath(context: Context, name: String): String {
+        val dir = File(getDataDirPath(context), name)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        return dir.absolutePath + "/"
+    }
+    fun fileCopy(stream: InputStream, destPath: String) {
+        val destFile = File(destPath)
+        if (!destFile.exists()) {
+            destFile.createNewFile()
+        }
+        val destStream = FileOutputStream(destFile)
+        stream.copyTo(destStream)
+        destStream.close()
     }
 
     interface FilesSearchWithContentListener {

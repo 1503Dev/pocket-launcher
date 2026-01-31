@@ -1,6 +1,7 @@
 package dev1503.pocketlauncher.launcher.fragments
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.view.Gravity
 import android.view.Menu
 import android.view.View
@@ -10,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.PopupMenu
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.progressindicator.LinearProgressIndicator
@@ -23,10 +25,18 @@ import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.Utils.kvConfig
 import dev1503.pocketlauncher.XboxAPI
+import dev1503.pocketlauncher.dexbridge.BridgeA
+import dev1503.pocketlauncher.dexbridge.BridgeB
 import dev1503.pocketlauncher.launcher.MainActivity
 import dev1503.pocketlauncher.launcher.MainActivity.Companion.TAG
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okio.buffer
+import okio.sink
+import okio.source
 import java.io.File
+import java.util.zip.ZipFile
 
 class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self), "FragmentMain") {
     private lateinit var itemAccount: ColumnLayout.ColumnLayoutItem
@@ -196,37 +206,221 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         dialog.show()
     }
     fun alert(message: Int, title: Int = 0) {
-        val dialog = MaterialAlertDialogBuilder(self)
-            .setMessage(message)
-            .setNegativeButton(R.string.ok, {_,_ -> })
-            .setCancelable(false)
-        if (title != 0) dialog.setTitle(title)
-        dialog.show()
+        uiRun {
+            val dialog = MaterialAlertDialogBuilder(self)
+                .setMessage(message)
+                .setNegativeButton(R.string.ok, {_,_ -> })
+                .setCancelable(false)
+            if (title != 0) dialog.setTitle(title)
+            dialog.show()
+        }
+    }
+    fun alert(message: Int, title: String) {
+        uiRun {
+            val dialog = MaterialAlertDialogBuilder(self)
+                .setMessage(message)
+                .setNegativeButton(R.string.ok, {_,_ -> })
+                .setCancelable(false)
+            if (title.isNotEmpty()) dialog.setTitle(title)
+            dialog.show()
+        }
+    }
+    fun alert(message: String, title: Int = 0) {
+        uiRun {
+            val dialog = MaterialAlertDialogBuilder(self)
+                .setMessage(message)
+                .setNegativeButton(R.string.ok, {_,_ -> })
+                .setCancelable(false)
+            if (title != 0) dialog.setTitle(title)
+            dialog.show()
+        }
     }
 
+    @SuppressLint("UnsafeDynamicallyLoadedCode")
     fun launch (instanceInfo: InstanceInfo) {
         val dialogView: LinearLayout = LinearLayout.inflate(self, R.layout.dialog_launching, null) as LinearLayout
+        val taskTextView = dialogView.findViewWithTag<View>("task") as TextView
         val iconCheckInstance = dialogView.findViewWithTag<View>("icon_check_instance") as ImageView
         val iconLoadMods = dialogView.findViewWithTag<View>("icon_load_mods") as ImageView
         val iconLaunchGame = dialogView.findViewWithTag<View>("icon_launch_game") as ImageView
+        val iconPatchDex = dialogView.findViewWithTag<View>("icon_patch_dex") as ImageView
+        val iconPatchSo = dialogView.findViewWithTag<View>("icon_patch_so") as ImageView
         val progress = dialogView.findViewWithTag<View>("progress") as LinearProgressIndicator
         val dialog = MaterialAlertDialogBuilder(self)
             .setTitle(R.string.launch_game)
             .setView(dialogView)
-            .setCancelable(true)
+            .setCancelable(false)
             .show()
-        if (!Utils.isInstanceEntityExist(self, "apk", instanceInfo.entity) ||
-            !File(instanceInfo.dirPath + "manifest.json").exists() ||
-            !File(instanceInfo.dirPath + "manifest.json").isFile){
-            dialog.dismiss()
-            alert(R.string.launch_failed, R.string.failed_to_check_instance)
-            return
+
+        fun updateProgress(p: Int, lastIcon: ImageView, nextIcon: ImageView?, isSkip: Boolean = false) {
+            uiRun {
+                lastIcon.setImageResource(if (isSkip) R.drawable.skip_next_24px else R.drawable.check_24px)
+                nextIcon?.setImageResource(R.drawable.arrow_forward_24px)
+
+                val totalSteps = 4
+                if (p >= totalSteps) {
+                    progress.isIndeterminate = true
+                    return@uiRun
+                }
+                progress.progress = (p.toFloat() / totalSteps.toFloat() * 100).toInt()
+            }
         }
-        progress.progress = 33
-        iconCheckInstance.setImageResource(R.drawable.check_24px)
-        iconLoadMods.setImageResource(R.drawable.arrow_forward_24px)
-        progress.progress = 66
-        iconLoadMods.setImageResource(R.drawable.skip_next_24px)
-        iconLaunchGame.setImageResource(R.drawable.arrow_forward_24px)
+        @SuppressLint("SetTextI18n")
+        fun updateTaskText(text: String, message: String = "") {
+            uiRun {
+                if (message.isNotEmpty()) {
+                    taskTextView.text = "$text: $message"
+                } else {
+                    taskTextView.text = text
+                }
+            }
+        }
+
+        self.lifecycleScope.launch(Dispatchers.IO) {
+            if (!Utils.isInstanceEntityExist(self, "apk", instanceInfo.entity) ||
+                !File(instanceInfo.dirPath + "manifest.json").exists() ||
+                !File(instanceInfo.dirPath + "manifest.json").isFile){
+                dialog.dismiss()
+                alert(R.string.launch_failed, R.string.failed_to_check_instance)
+                return@launch
+            }
+            updateProgress(1, iconCheckInstance, iconLoadMods)
+            updateProgress(2, iconLoadMods, iconPatchDex, true)
+
+            try {
+                val classLoader = self.classLoader
+                classLoader.loadClass(BridgeA::class.java.name)
+                classLoader.loadClass(BridgeB::class.java.name)
+
+                updateTaskText("Accessing pathList")
+                val pathListField = classLoader.javaClass.superclass.getDeclaredField("pathList")
+                pathListField.isAccessible = true
+                val pathList = pathListField.get(classLoader)
+                val addDexPath = pathList.javaClass.getDeclaredMethod("addDexPath", String::class.java, File::class.java)
+
+                updateTaskText("Clearing cache")
+                Utils.fileRemove(Utils.getDirIPath(self, "cache/launcher"))
+
+                val source = Utils.getInstanceEntitiesDirPath(self, "apk") + instanceInfo.entity + ".apk"
+
+                // Load dex files
+                updateTaskText("Extracting dex files")
+                val cacheDexDir = Utils.getDirIPath(self, "cache/launcher/dex")
+                ZipFile(source).use { zipFile ->
+                    for (i in 4 downTo 0) {
+                        val dexName = "classes" + (if (i == 0) "" else i.toString()) + ".dex"
+                        val dexFile = zipFile.getEntry(dexName) ?: continue
+
+                        val mcDex = File(cacheDexDir, dexName)
+
+                        updateTaskText("Extracting dex file", dexName)
+                        zipFile.getInputStream(dexFile).source().use { source ->
+                            mcDex.sink().buffer().use { sink ->
+                                sink.writeAll(source)
+                            }
+                        }
+
+                        if (mcDex.setReadOnly()) {
+                            updateTaskText("Add dex file to pathList", dexName)
+                            addDexPath.invoke(pathList, mcDex.absolutePath, null)
+                        } else {
+                            throw Exception("Failed to set read-only permission for $dexName")
+                        }
+                    }
+                }
+                val bridgeDexStream = self.assets.open("pocket_launcher/bridge.dex")
+                Utils.fileCopy(bridgeDexStream, cacheDexDir + "bridge.dex")
+                updateTaskText("Add dex file to pathList", "bridge.dex")
+                addDexPath.invoke(pathList, cacheDexDir + "bridge.dex", null)
+
+                // Load so files
+                updateProgress(3, iconPatchDex, iconPatchSo)
+                updateTaskText("Extracting shared libraries")
+                val cacheLibDir = Utils.getDirIPath(self, "cache/launcher/native_libs")
+                ZipFile(source).use { zipFile ->
+                    val libDir = "lib/arm64-v8a/"
+
+                    zipFile.entries().asSequence().forEach { entry ->
+                        if (entry.name.startsWith(libDir) &&
+                            entry.name.substringAfterLast('/').startsWith("lib") &&
+                            entry.name.endsWith(".so") &&
+                            !entry.isDirectory) {
+                            println(entry.name)
+
+                            val soFileName = entry.name.substringAfterLast('/')
+                            val targetSoFile = File(cacheLibDir, soFileName)
+
+                            updateTaskText("Extracting shared library", soFileName)
+
+                            zipFile.getInputStream(entry).source().use { source ->
+                                targetSoFile.sink().buffer().use { sink ->
+                                    sink.writeAll(source)
+                                }
+                            }
+
+                            if (!targetSoFile.setReadOnly()) {
+                                throw Exception("Failed to set read-only permission for $soFileName")
+                            }
+                        }
+                    }
+                }
+                updateTaskText("Add shared object directory to pathList")
+                val libDirsField = pathList.javaClass.getDeclaredField("nativeLibraryDirectories")
+                libDirsField.isAccessible = true
+                val dirList = libDirsField.get(pathList) as MutableList<File>
+                dirList.add(File(cacheLibDir))
+                libDirsField.set(pathList, dirList)
+
+                val addNativePath = pathList.javaClass.getDeclaredMethod("addNativePath", Collection::class.java)
+                val dirList2 = arrayListOf(cacheLibDir)
+                addNativePath.invoke(pathList, dirList2)
+
+                updateTaskText("Loading shared object files")
+                File(cacheLibDir).listFiles()?.sortedWith { lib1, lib2 ->
+                    val name1 = lib1.name.toString()
+                    val name2 = lib2.name.toString()
+
+                    val isPriority1 = name1 == "libc++_shared.so" || name1 == "libfmod.so"
+                    val isPriority2 = name2 == "libc++_shared.so" || name2 == "libfmod.so"
+
+                    when {
+                        isPriority1 && !isPriority2 -> -1
+                        !isPriority1 && isPriority2 -> 1
+                        else -> name1.compareTo(name2)
+                    }
+                }?.forEach {
+                    if (!it.name.endsWith(".so")) return@forEach
+                    updateTaskText("Loading shared object file", it.name)
+                    System.load(it.absolutePath)
+                }
+
+                // Launch game
+                uiRun {
+                    try {
+                        updateProgress(4, iconPatchSo, iconLaunchGame)
+                        updateTaskText("Launching game", "Initializing classes")
+                        classLoader.loadClass("com.mojang.minecraftpe.MainActivity")
+
+                        updateTaskText("Launching game")
+                        BridgeA.setApkPath(source)
+                        val intent = Intent(self, classLoader.loadClass("dev1503.pocketlauncher.dexbridge.MinecraftActivity"))
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        self.startActivity(intent)
+                    } catch (e: Exception) {
+                        Log.e(TAG, e)
+                        throw e
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, e)
+                dialog.dismiss()
+                var stackTrace = ""
+                e.stackTrace.forEach {
+                    stackTrace += "    at " + it.toString() + "\n"
+                }
+                alert("${e.toString()}\n$stackTrace", R.string.launch_failed)
+                return@launch
+            }
+        }
     }
 }

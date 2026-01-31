@@ -33,4 +33,8 @@
     <string name="launch_failed">Launch failed</string>
     <string name="failed_to_check_instance">Failed to check instance</string>
     <string name="verifying_entity_files">Verifying entity files</string>
+    <string name="patch_dex">Patch dex</string>
+    <string name="patch_so">Patch shared object</string>
+    <string name="unsupported_android_system">Unsupported Android system</string>
+    <string name="android_system_version_not_supported">Your Android system version Android %s (SDK %s) is not supported. Currently, Android 9.0 (SDK 28) or above is required. Please wait for future updates to gain support.</string>
 </resources>
