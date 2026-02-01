@@ -4,7 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
@@ -20,11 +23,9 @@ import io.reactivex.rxjava3.core.Single
 import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import okio.Buffer
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.buffer
-import okio.sink
 import okio.source
 import java.io.File
 import java.io.FileInputStream
@@ -34,11 +35,14 @@ import java.security.MessageDigest
 import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.roundToInt
+import androidx.core.graphics.createBitmap
 
 object Utils {
     const val TAG = "Utils"
     const val XAL_DEFAULT_CONFIG_FILE_NAME = "1734634999945796391"
-    var kvConfig: KVConfig? = null
+    @SuppressLint("StaticFieldLeak")
+    var kvGlobalGameConfig: KVConfig? = null
+    var kvLauncherSettings: KVConfig? = null
 
     @ColorInt
     fun getColorFromAttr(context: Context, attrResId: Int): Int {
@@ -443,7 +447,9 @@ object Utils {
                 source,
                 instanceDir.absolutePath + "/",
                 entityType,
-                entity
+                entity,
+                context,
+                false
             )
         } catch (e: Exception) {
             Log.e(TAG, e)
@@ -538,6 +544,36 @@ object Utils {
         val destStream = FileOutputStream(destFile)
         stream.copyTo(destStream)
         destStream.close()
+    }
+    fun getSelectedInstance(context: Context): InstanceInfo? {
+        return kvLauncherSettings?.getString("instance")?.let {
+            getInstanceInfo(context, it)
+        }
+    }
+    fun getApkIcon(context: Context, apkPath: String): Drawable? {
+        val pm = context.packageManager
+        val packageInfo = pm.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES) ?: return null
+
+        val appInfo = packageInfo.applicationInfo
+        appInfo?.sourceDir = apkPath
+        appInfo?.publicSourceDir = apkPath
+
+        return appInfo?.loadIcon(pm)
+    }
+    fun drawable2Bitmap(drawable: Drawable?): Bitmap {
+        if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            return drawable.bitmap
+        }
+
+        val width = drawable?.intrinsicWidth?.coerceAtLeast(1) ?: 1
+        val height = drawable?.intrinsicHeight?.coerceAtLeast(1) ?: 1
+
+        val bitmap = createBitmap(width, height)
+        val canvas = Canvas(bitmap)
+        drawable?.setBounds(0, 0, canvas.width, canvas.height)
+        drawable?.draw(canvas)
+
+        return bitmap
     }
 
     interface FilesSearchWithContentListener {

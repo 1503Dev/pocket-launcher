@@ -2,6 +2,7 @@ package dev1503.pocketlauncher.launcher.fragments
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.graphics.Bitmap
 import android.view.Gravity
 import android.view.Menu
 import android.view.View
@@ -23,7 +24,8 @@ import dev1503.pocketlauncher.InstanceInfo
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
-import dev1503.pocketlauncher.Utils.kvConfig
+import dev1503.pocketlauncher.Utils.kvGlobalGameConfig
+import dev1503.pocketlauncher.Utils.kvLauncherSettings
 import dev1503.pocketlauncher.XboxAPI
 import dev1503.pocketlauncher.dexbridge.BridgeA
 import dev1503.pocketlauncher.dexbridge.BridgeB
@@ -37,11 +39,11 @@ import okio.buffer
 import okio.sink
 import okio.source
 import java.io.File
-import java.io.InputStream
 import java.util.zip.ZipFile
 
 class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self), "FragmentMain") {
     private lateinit var itemAccount: ColumnLayout.ColumnLayoutItem
+    private lateinit var itemEditInstance: ColumnLayout.ColumnLayoutItem
     private val activity: MainActivity = self as MainActivity
     val columnLayout: ColumnLayout = layout as ColumnLayout
     lateinit var btnLaunchInstanceName: TextView
@@ -59,6 +61,13 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
             self.getString(R.string.not_logged_in)
         )
         columnLayout.addDivider(self.getString(R.string.games))
+        itemEditInstance = columnLayout.addItem(
+            self.getString(R.string.edit_instance),
+            R.drawable.deployed_code_24px,
+        )
+        itemEditInstance.onClick = View.OnClickListener {
+            editInstance()
+        }
         columnLayout.addItem(
             self.getString(R.string.download),
             R.drawable.download_24px,
@@ -72,7 +81,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         val btnLaunch = columnLayout.contentContainer.findViewWithTag<View>("btn_launch")
         btnLaunch.setOnClickListener {
             try {
-                val instanceInfo = Utils.getInstanceInfo(self, kvConfig?.getString("instance", ""))
+                val instanceInfo = Utils.getInstanceInfo(self, kvLauncherSettings?.getString("instance", ""))
                 if (instanceInfo == null) {
                     Snackbar.make(layout, R.string.no_instance_selected, Snackbar.LENGTH_SHORT).show()
                 } else {
@@ -82,14 +91,34 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 Log.e(TAG, e)
             }
         }
-        btnLaunchInstanceName = btnLaunch.findViewWithTag("instance_name")
-        if (kvConfig?.getString("instance", "") != "") {
-            btnLaunchInstanceName.text = kvConfig?.getString("instance", "")
-        }
+        btnLaunchInstanceName = btnLaunch.findViewWithTag<TextView>("instance_name")!!
 
+        updateInstances()
         initMsAccount()
         return true
     }
+    fun updateInstances() {
+        self.lifecycleScope.launch(Dispatchers.IO) {
+            val instanceInfo = Utils.getSelectedInstance(self)
+            uiRun {
+                if (instanceInfo == null) {
+                    btnLaunchInstanceName.text = self.getString(R.string.no_instance_selected)
+                    itemEditInstance.setDescription(self.getString(R.string.no_instance_selected))
+                    itemEditInstance.setIconBig(R.drawable.deployed_code_24px)
+                } else {
+                    btnLaunchInstanceName.text = instanceInfo.name
+                    itemEditInstance.setDescription(instanceInfo.name ?: "")
+                    val icon = instanceInfo.iconBitmap
+                    if (icon != null) {
+                        itemEditInstance.setIconBig(icon)
+                    } else {
+                        itemEditInstance.setIconBig(R.drawable.deployed_code_24px)
+                    }
+                }
+            }
+        }
+    }
+
     @SuppressLint("CheckResult")
     private fun initMsAccount() {
         itemAccount.setIconBig(R.drawable.person_24px)
@@ -192,8 +221,8 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         })
         popup.setOnMenuItemClickListener { menuItem ->
             val mInstance = instances[menuItem.itemId]
-            kvConfig?.set("instance", mInstance.name)
-            btnLaunchInstanceName.text = mInstance.name
+            kvLauncherSettings?.set("instance", mInstance.name)
+            updateInstances()
             true
         }
         popup.show()
@@ -237,8 +266,11 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
             dialog.show()
         }
     }
+    fun editInstance() {
+        alert(R.string.edit_instance)
+    }
 
-    @SuppressLint("UnsafeDynamicallyLoadedCode")
+    @SuppressLint("UnsafeDynamicallyLoadedCode", "DiscouragedPrivateApi")
     fun launch (instanceInfo: InstanceInfo) {
         val dialogView: LinearLayout = LinearLayout.inflate(self, R.layout.dialog_launching, null) as LinearLayout
         val taskTextView = dialogView.findViewWithTag<View>("task") as TextView
@@ -304,7 +336,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 updateTaskText("Clearing cache")
                 Utils.fileRemove(Utils.getDirIPath(self, "cache/launcher"))
 
-                val source = Utils.getInstanceEntitiesDirPath(self, "apk") + instanceInfo.entity + ".apk"
+                val source = instanceInfo.apkPath
 
                 // Load dex files
                 updateTaskText("Extracting dex files")
@@ -340,6 +372,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                             Utils.fileCopy(inputStream, cacheDexDir + fileName)
                             updateTaskText("Add dex file to pathList", fileName)
                             addDexPath.invoke(pathList, cacheDexDir + fileName, null)
+                            Log.d(TAG, "Loaded $fileName")
                         }
                     }
                 } catch (e: Exception) {
@@ -383,6 +416,8 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                                 }
                             }
 
+                            Log.d(TAG, "Extracted $soFileName to ${targetSoFile.absolutePath}")
+
                             if (!targetSoFile.setReadOnly()) {
                                 throw Exception("Failed to set read-only permission for $soFileName")
                             }
@@ -418,18 +453,18 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                     if (!it.name.endsWith(".so")) return@forEach
                     updateTaskText("Loading shared object file", it.name)
                     System.load(it.absolutePath)
+                    Log.d(TAG, "Loaded ${it.absolutePath}")
                 }
 
                 // Launch game
+                kvGlobalGameConfig?.release()
                 uiRun {
+                    updateTaskText("Launching game")
                     try {
-                        updateTaskText("Launching game", "Initializing classes")
-                        classLoader.loadClass("com.mojang.minecraftpe.MainActivity")
-
-                        updateTaskText("Launching game")
                         val intent = Intent(self, MinecraftActivity::class.java)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         self.startActivity(intent)
+                        Utils.fileRemove(cacheDexDir)
+                        Log.d(TAG, "Removed $cacheDexDir")
                         self.finish()
                     } catch (e: Exception) {
                         Log.e(TAG, e)

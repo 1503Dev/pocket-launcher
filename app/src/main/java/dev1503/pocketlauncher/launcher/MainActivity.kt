@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev1503.pocketlauncher.KVConfig
@@ -18,7 +17,6 @@ import dev1503.pocketlauncher.launcher.fragments.Fragment
 import dev1503.pocketlauncher.launcher.fragments.FragmentDownload
 import dev1503.pocketlauncher.launcher.fragments.FragmentMain
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
-import okio.Utf8
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -56,7 +54,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        Utils.kvConfig = KVConfig(self, "config.json")
+        Utils.kvGlobalGameConfig = KVConfig(self, Utils.getDataDirPath(self) + "global_game_config.json")
+        Utils.kvLauncherSettings = KVConfig(self, Utils.getDataDirPath(self) + "launcher_settings.json")
         layoutContainer = findViewWithTag("container") as ViewGroup
         initLayouts()
 
@@ -151,5 +150,11 @@ class MainActivity : AppCompatActivity() {
     @SuppressLint("MissingSuperCall")
     override fun onBackPressed() {
         switchFragment("main")
+    }
+
+    override fun onDestroy() {
+        Utils.kvLauncherSettings?.release()
+        Utils.kvGlobalGameConfig?.release()
+        super.onDestroy()
     }
 }
