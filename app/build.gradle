@@ -60,8 +60,8 @@ dependencies {
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 
-    implementation files("libs/mc_fmod.jar")
-
-    compileOnlyApi files("libs/com.mojang.minecraftpe_old.jar")
     compileOnlyApi files("libs/bridge.jar")
+    compileOnlyApi files("libs/mc_firebase_1.20.15.jar")
+
+    implementation (project(':minecraftpe'))
 }

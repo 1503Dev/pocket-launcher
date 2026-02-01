@@ -17,6 +17,7 @@ public class MinecraftActivity extends MainActivity {
     public void onCreate(Bundle bundle) {
         BridgeB.onCreate(this, bundle);
         super.onCreate(bundle);
+        BridgeB.afterOnCreate(this, bundle);
     }
 
     static {
@@ -25,6 +26,15 @@ public class MinecraftActivity extends MainActivity {
 
     @Override
     public String getExternalStoragePath() {
-        return BridgeB.getExternalStoragePath();
+        return BridgeB.getExternalStoragePath(this, super.getExternalStoragePath());
+    }
+    public String getInternalStoragePath() {
+        return BridgeB.getInternalStoragePath(this);
+    }
+    @Override
+    public void onDestroy() {
+        BridgeB.onDestroy(this);
+        super.onDestroy();
+        BridgeB.afterOnDestroy(this);
     }
 }

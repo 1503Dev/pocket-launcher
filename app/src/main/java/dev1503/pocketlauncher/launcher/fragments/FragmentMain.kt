@@ -27,6 +27,7 @@ import dev1503.pocketlauncher.Utils.kvConfig
 import dev1503.pocketlauncher.XboxAPI
 import dev1503.pocketlauncher.dexbridge.BridgeA
 import dev1503.pocketlauncher.dexbridge.BridgeB
+import dev1503.pocketlauncher.dexbridge.MinecraftActivity
 import dev1503.pocketlauncher.launcher.MainActivity
 import dev1503.pocketlauncher.launcher.MainActivity.Companion.TAG
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
@@ -36,6 +37,7 @@ import okio.buffer
 import okio.sink
 import okio.source
 import java.io.File
+import java.io.InputStream
 import java.util.zip.ZipFile
 
 class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self), "FragmentMain") {
@@ -244,6 +246,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         val iconLoadMods = dialogView.findViewWithTag<View>("icon_load_mods") as ImageView
         val iconLaunchGame = dialogView.findViewWithTag<View>("icon_launch_game") as ImageView
         val iconPatchDex = dialogView.findViewWithTag<View>("icon_patch_dex") as ImageView
+        val iconPatchAsset = dialogView.findViewWithTag<View>("icon_patch_asset") as ImageView
         val iconPatchSo = dialogView.findViewWithTag<View>("icon_patch_so") as ImageView
         val progress = dialogView.findViewWithTag<View>("progress") as LinearProgressIndicator
         val dialog = MaterialAlertDialogBuilder(self)
@@ -257,7 +260,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 lastIcon.setImageResource(if (isSkip) R.drawable.skip_next_24px else R.drawable.check_24px)
                 nextIcon?.setImageResource(R.drawable.arrow_forward_24px)
 
-                val totalSteps = 4
+                val totalSteps = 5
                 if (p >= totalSteps) {
                     progress.isIndeterminate = true
                     return@uiRun
@@ -328,13 +331,35 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                         }
                     }
                 }
-                val bridgeDexStream = self.assets.open("pocket_launcher/bridge.dex")
-                Utils.fileCopy(bridgeDexStream, cacheDexDir + "bridge.dex")
-                updateTaskText("Add dex file to pathList", "bridge.dex")
-                addDexPath.invoke(pathList, cacheDexDir + "bridge.dex", null)
+                // Load bridge
+                try {
+                    val fileList = self.assets.list("pocket_launcher")
+                    fileList?.forEach { fileName ->
+                        if (fileName.matches(Regex("bridge.*\\.dex"))) {
+                            val inputStream = self.assets.open("pocket_launcher/$fileName")
+                            Utils.fileCopy(inputStream, cacheDexDir + fileName)
+                            updateTaskText("Add dex file to pathList", fileName)
+                            addDexPath.invoke(pathList, cacheDexDir + fileName, null)
+                        }
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+                // Load assets
+                updateProgress(3, iconPatchDex, iconPatchAsset)
+                val am = self.getAssets()
+                try {
+                    val addAssetPath = am.javaClass.getDeclaredMethod(
+                        "addAssetPath", String::class.java
+                    )
+                    addAssetPath.invoke(am, source)
+                } catch (e: java.lang.Exception) {
+                    Log.e(TAG, e)
+                }
 
                 // Load so files
-                updateProgress(3, iconPatchDex, iconPatchSo)
+                updateProgress(4, iconPatchAsset, iconPatchSo)
                 updateTaskText("Extracting shared libraries")
                 val cacheLibDir = Utils.getDirIPath(self, "cache/launcher/native_libs")
                 ZipFile(source).use { zipFile ->
@@ -375,6 +400,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 val dirList2 = arrayListOf(cacheLibDir)
                 addNativePath.invoke(pathList, dirList2)
 
+                updateProgress(5, iconPatchSo, iconLaunchGame)
                 updateTaskText("Loading shared object files")
                 File(cacheLibDir).listFiles()?.sortedWith { lib1, lib2 ->
                     val name1 = lib1.name.toString()
@@ -397,15 +423,14 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 // Launch game
                 uiRun {
                     try {
-                        updateProgress(4, iconPatchSo, iconLaunchGame)
                         updateTaskText("Launching game", "Initializing classes")
                         classLoader.loadClass("com.mojang.minecraftpe.MainActivity")
 
                         updateTaskText("Launching game")
-                        BridgeA.setApkPath(source)
-                        val intent = Intent(self, classLoader.loadClass("dev1503.pocketlauncher.dexbridge.MinecraftActivity"))
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        val intent = Intent(self, MinecraftActivity::class.java)
+                        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
                         self.startActivity(intent)
+                        self.finish()
                     } catch (e: Exception) {
                         Log.e(TAG, e)
                         throw e

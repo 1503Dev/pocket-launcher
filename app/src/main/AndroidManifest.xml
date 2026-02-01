@@ -50,10 +50,6 @@
                 android:name="android.app.lib_name"
                 android:value="minecraftpe" />
         </activity>
-        <activity android:name="com.microsoft.xal.browser.BrowserLaunchActivity"
-            tools:ignore="MissingClass" />
-        <activity android:name="com.microsoft.xal.browser.WebKitWebViewController"
-            tools:ignore="MissingClass" />
 
     </application>
 
