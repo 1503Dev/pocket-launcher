@@ -14,6 +14,16 @@ class KVConfig(
     private val filePath: String
 ) {
 
+    companion object {
+        val TYPE_STRING = 0
+        val TYPE_INT = 1
+        val TYPE_LONG = 2
+        val TYPE_FLOAT = 3
+        val TYPE_BOOLEAN = 4
+        val TYPE_ARRAY = 5
+        val TYPE_OBJECT = 6
+    }
+
     val gson: Gson = GsonBuilder().setPrettyPrinting().create()
     val lock = ReentrantReadWriteLock()
     val file: File = File(filePath)
@@ -114,6 +124,80 @@ class KVConfig(
             }
         }
     }
+
+    fun getArray(key: String): List<Any> {
+        if (isReleased) return emptyList()
+
+        return lock.read {
+            try {
+                val value = cache[key]
+
+                when (value) {
+                    is String -> {
+                        val typeToken = object : TypeToken<List<Any>>() {}
+                        gson.fromJson<List<Any>>(value, typeToken.type) ?: emptyList()
+                    }
+
+                    is List<*> -> {
+                        value.filterNotNull().map { it as Any }
+                    }
+
+                    is Array<*> -> {
+                        value.filterNotNull().map { it as Any }.toList()
+                    }
+
+                    else -> emptyList()
+                }
+            } catch (e: Exception) {
+                emptyList()
+            }
+        }
+    }
+
+    fun getArray(key: String, defaultValue: List<Any>): List<Any> {
+        if (isReleased) return defaultValue
+
+        return lock.read {
+            try {
+                val value = cache[key]
+
+                when (value) {
+                    is String -> {
+                        val typeToken = object : TypeToken<List<Any>>() {}
+                        gson.fromJson<List<Any>>(value, typeToken.type) ?: defaultValue
+                    }
+
+                    is List<*> -> {
+                        value.filterNotNull().map { it as Any } ?: defaultValue
+                    }
+
+                    is Array<*> -> {
+                        value.filterNotNull().map { it as Any }.toList() ?: defaultValue
+                    }
+
+                    else -> defaultValue
+                }
+            } catch (e: Exception) {
+                defaultValue
+            }
+        }
+    }
+
+    fun setArray(key: String, list: List<Any>?) {
+        if (isReleased) return
+
+        if (list == null) {
+            remove(key)
+            return
+        }
+
+        lock.write {
+            // 将列表序列化为JSON字符串存储
+            cache[key] = gson.toJson(list)
+            saveToFile()
+        }
+    }
+
     fun remove(key: String) {
         if (isReleased) return
         set(key, null)
@@ -189,6 +273,20 @@ class KVConfig(
         isReleased = true
         lock.write {
             cache.clear()
+        }
+    }
+    fun getType(key: String): Int? {
+        if (isReleased) return null
+        return when (val value = cache[key]) {
+            is String -> TYPE_STRING
+            is Int -> TYPE_INT
+            is Long -> TYPE_LONG
+            is Float -> TYPE_FLOAT
+            is Boolean -> TYPE_BOOLEAN
+            is Array<*> -> TYPE_ARRAY
+            is List<*> -> TYPE_ARRAY
+            is Map<*, *> -> TYPE_OBJECT
+            else -> null
         }
     }
 }

@@ -21,6 +21,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import dev1503.pocketlauncher.HttpUtils
 import dev1503.pocketlauncher.InstanceInfo
+import dev1503.pocketlauncher.KVConfig
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
@@ -33,6 +34,8 @@ import dev1503.pocketlauncher.dexbridge.MinecraftActivity
 import dev1503.pocketlauncher.launcher.MainActivity
 import dev1503.pocketlauncher.launcher.MainActivity.Companion.TAG
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
+import dev1503.pocketlauncher.modloader.ModInfo
+import dev1503.pocketlauncher.modloader.ModLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okio.buffer
@@ -325,165 +328,192 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 return@launch
             }
             updateProgress(1, iconCheckInstance, iconLoadMods)
-            updateProgress(2, iconLoadMods, iconPatchDex, true)
 
-            try {
-                val classLoader = self.classLoader
-                classLoader.loadClass(BridgeA::class.java.name)
-                classLoader.loadClass(BridgeB::class.java.name)
+            val classLoader = self.classLoader
 
-                updateTaskText("Accessing pathList")
-                val pathListField = classLoader.javaClass.superclass.getDeclaredField("pathList")
-                pathListField.isAccessible = true
-                val pathList = pathListField.get(classLoader)
-                val addDexPath = pathList.javaClass.getDeclaredMethod("addDexPath", String::class.java, File::class.java)
-
-                updateTaskText("Clearing cache")
-                Utils.fileRemove(Utils.getADirIPath(self, "cache/launcher"))
-
-                val source = instanceInfo.apkPath
-
-                // Load dex files
-                updateTaskText("Extracting dex files")
-                val cacheDexDir = Utils.getADirIPath(self, "cache/launcher/dex")
-                ZipFile(source).use { zipFile ->
-                    for (i in 4 downTo 0) {
-                        val dexName = "classes" + (if (i == 0) "" else i.toString()) + ".dex"
-                        val dexFile = zipFile.getEntry(dexName) ?: continue
-
-                        val mcDex = File(cacheDexDir, dexName)
-
-                        updateTaskText("Extracting dex file", dexName)
-                        zipFile.getInputStream(dexFile).source().use { source ->
-                            mcDex.sink().buffer().use { sink ->
-                                sink.writeAll(source)
-                            }
-                        }
-
-                        if (mcDex.setReadOnly()) {
-                            updateTaskText("Add dex file to pathList", dexName)
-                            addDexPath.invoke(pathList, mcDex.absolutePath, null)
-                        } else {
-                            throw Exception("Failed to set read-only permission for $dexName")
-                        }
-                    }
-                }
-                // Load bridge
+            fun normalProcess() {
                 try {
-                    val fileList = self.assets.list("pocket_launcher")
-                    fileList?.forEach { fileName ->
-                        if (fileName.matches(Regex("bridge.*\\.dex"))) {
-                            val inputStream = self.assets.open("pocket_launcher/$fileName")
-                            Utils.fileCopy(inputStream, cacheDexDir + fileName)
-                            updateTaskText("Add dex file to pathList", fileName)
-                            addDexPath.invoke(pathList, cacheDexDir + fileName, null)
-                            Log.d(TAG, "Loaded $fileName")
-                        }
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
+                    classLoader.loadClass(BridgeA::class.java.name)
+                    classLoader.loadClass(BridgeB::class.java.name)
 
-                // Load assets
-                updateProgress(3, iconPatchDex, iconPatchAsset)
-                val am = self.getAssets()
-                try {
-                    val addAssetPath = am.javaClass.getDeclaredMethod(
-                        "addAssetPath", String::class.java
-                    )
-                    addAssetPath.invoke(am, source)
-                } catch (e: java.lang.Exception) {
-                    Log.e(TAG, e)
-                }
+                    updateTaskText("Accessing pathList")
+                    val pathListField = classLoader.javaClass.superclass.getDeclaredField("pathList")
+                    pathListField.isAccessible = true
+                    val pathList = pathListField.get(classLoader)
+                    val addDexPath = pathList.javaClass.getDeclaredMethod("addDexPath", String::class.java, File::class.java)
 
-                // Load so files
-                updateProgress(4, iconPatchAsset, iconPatchSo)
-                updateTaskText("Extracting shared libraries")
-                val cacheLibDir = Utils.getADirIPath(self, "cache/launcher/native_libs")
-                ZipFile(source).use { zipFile ->
-                    val libDir = "lib/arm64-v8a/"
+                    updateTaskText("Clearing cache")
+                    Utils.fileRemove(Utils.getADirIPath(self, "cache/launcher"))
 
-                    zipFile.entries().asSequence().forEach { entry ->
-                        if (entry.name.startsWith(libDir) &&
-                            entry.name.substringAfterLast('/').startsWith("lib") &&
-                            entry.name.endsWith(".so") &&
-                            !entry.isDirectory) {
-                            println(entry.name)
+                    val source = instanceInfo.apkPath
 
-                            val soFileName = entry.name.substringAfterLast('/')
-                            val targetSoFile = File(cacheLibDir, soFileName)
+                    // Load dex files
+                    updateTaskText("Extracting dex files")
+                    val cacheDexDir = Utils.getADirIPath(self, "cache/launcher/dex")
+                    ZipFile(source).use { zipFile ->
+                        for (i in 4 downTo 0) {
+                            val dexName = "classes" + (if (i == 0) "" else i.toString()) + ".dex"
+                            val dexFile = zipFile.getEntry(dexName) ?: continue
 
-                            updateTaskText("Extracting shared library", soFileName)
+                            val mcDex = File(cacheDexDir, dexName)
 
-                            zipFile.getInputStream(entry).source().use { source ->
-                                targetSoFile.sink().buffer().use { sink ->
+                            updateTaskText("Extracting dex file", dexName)
+                            zipFile.getInputStream(dexFile).source().use { source ->
+                                mcDex.sink().buffer().use { sink ->
                                     sink.writeAll(source)
                                 }
                             }
 
-                            Log.d(TAG, "Extracted $soFileName to ${targetSoFile.absolutePath}")
-
-                            if (!targetSoFile.setReadOnly()) {
-                                throw Exception("Failed to set read-only permission for $soFileName")
+                            if (mcDex.setReadOnly()) {
+                                updateTaskText("Add dex file to pathList", dexName)
+                                addDexPath.invoke(pathList, mcDex.absolutePath, null)
+                            } else {
+                                throw Exception("Failed to set read-only permission for $dexName")
                             }
                         }
                     }
-                }
-                updateTaskText("Add shared object directory to pathList")
-                val libDirsField = pathList.javaClass.getDeclaredField("nativeLibraryDirectories")
-                libDirsField.isAccessible = true
-                val dirList = libDirsField.get(pathList) as MutableList<File>
-                dirList.add(File(cacheLibDir))
-                libDirsField.set(pathList, dirList)
-
-                val addNativePath = pathList.javaClass.getDeclaredMethod("addNativePath", Collection::class.java)
-                val dirList2 = arrayListOf(cacheLibDir)
-                addNativePath.invoke(pathList, dirList2)
-
-                updateProgress(5, iconPatchSo, iconLaunchGame)
-                updateTaskText("Loading shared object files")
-                File(cacheLibDir).listFiles()?.sortedWith { lib1, lib2 ->
-                    val name1 = lib1.name.toString()
-                    val name2 = lib2.name.toString()
-
-                    val isPriority1 = name1 == "libc++_shared.so" || name1 == "libfmod.so"
-                    val isPriority2 = name2 == "libc++_shared.so" || name2 == "libfmod.so"
-
-                    when {
-                        isPriority1 && !isPriority2 -> -1
-                        !isPriority1 && isPriority2 -> 1
-                        else -> name1.compareTo(name2)
-                    }
-                }?.forEach {
-                    if (!it.name.endsWith(".so")) return@forEach
-                    updateTaskText("Loading shared object file", it.name)
-                    System.load(it.absolutePath)
-                    Log.d(TAG, "Loaded ${it.absolutePath}")
-                }
-
-                // Launch game
-                kvGlobalGameConfig?.release()
-                uiRun {
-                    updateTaskText("Launching game")
+                    // Load bridge
                     try {
-                        val intent = Intent(self, MinecraftActivity::class.java)
-                        self.startActivity(intent)
-                        Utils.fileRemove(cacheDexDir)
-                        Log.d(TAG, "Removed $cacheDexDir")
-                        self.finish()
+                        val fileList = self.assets.list("pocket_launcher")
+                        fileList?.forEach { fileName ->
+                            if (fileName.matches(Regex("bridge.*\\.dex"))) {
+                                val inputStream = self.assets.open("pocket_launcher/$fileName")
+                                Utils.fileCopy(inputStream, cacheDexDir + fileName)
+                                updateTaskText("Add dex file to pathList", fileName)
+                                addDexPath.invoke(pathList, cacheDexDir + fileName, null)
+                                Log.d(TAG, "Loaded $fileName")
+                            }
+                        }
                     } catch (e: Exception) {
-                        Log.e(TAG, e)
-                        throw e
+                        e.printStackTrace()
                     }
+
+                    // Load assets
+                    updateProgress(3, iconPatchDex, iconPatchAsset)
+                    val am = self.getAssets()
+                    try {
+                        val addAssetPath = am.javaClass.getDeclaredMethod(
+                            "addAssetPath", String::class.java
+                        )
+                        addAssetPath.invoke(am, source)
+                    } catch (e: java.lang.Exception) {
+                        Log.e(TAG, e)
+                    }
+
+                    // Load so files
+                    updateProgress(4, iconPatchAsset, iconPatchSo)
+                    updateTaskText("Extracting shared libraries")
+                    val cacheLibDir = Utils.getADirIPath(self, "cache/launcher/native_libs")
+                    ZipFile(source).use { zipFile ->
+                        val libDir = "lib/arm64-v8a/"
+
+                        zipFile.entries().asSequence().forEach { entry ->
+                            if (entry.name.startsWith(libDir) &&
+                                entry.name.substringAfterLast('/').startsWith("lib") &&
+                                entry.name.endsWith(".so") &&
+                                !entry.isDirectory) {
+                                println(entry.name)
+
+                                val soFileName = entry.name.substringAfterLast('/')
+                                val targetSoFile = File(cacheLibDir, soFileName)
+
+                                updateTaskText("Extracting shared library", soFileName)
+
+                                zipFile.getInputStream(entry).source().use { source ->
+                                    targetSoFile.sink().buffer().use { sink ->
+                                        sink.writeAll(source)
+                                    }
+                                }
+
+                                Log.d(TAG, "Extracted $soFileName to ${targetSoFile.absolutePath}")
+
+                                if (!targetSoFile.setReadOnly()) {
+                                    throw Exception("Failed to set read-only permission for $soFileName")
+                                }
+                            }
+                        }
+                    }
+                    updateTaskText("Add shared object directory to pathList")
+                    val libDirsField = pathList.javaClass.getDeclaredField("nativeLibraryDirectories")
+                    libDirsField.isAccessible = true
+                    val dirList = libDirsField.get(pathList) as MutableList<File>
+                    dirList.add(File(cacheLibDir))
+                    libDirsField.set(pathList, dirList)
+
+                    val addNativePath = pathList.javaClass.getDeclaredMethod("addNativePath", Collection::class.java)
+                    val dirList2 = arrayListOf(cacheLibDir)
+                    addNativePath.invoke(pathList, dirList2)
+
+                    updateProgress(5, iconPatchSo, iconLaunchGame)
+                    updateTaskText("Loading shared object files")
+                    File(cacheLibDir).listFiles()?.sortedWith { lib1, lib2 ->
+                        val name1 = lib1.name.toString()
+                        val name2 = lib2.name.toString()
+
+                        val isPriority1 = name1 == "libc++_shared.so" || name1 == "libfmod.so"
+                        val isPriority2 = name2 == "libc++_shared.so" || name2 == "libfmod.so"
+
+                        when {
+                            isPriority1 && !isPriority2 -> -1
+                            !isPriority1 && isPriority2 -> 1
+                            else -> name1.compareTo(name2)
+                        }
+                    }?.forEach {
+                        if (!it.name.endsWith(".so")) return@forEach
+                        updateTaskText("Loading shared object file", it.name)
+                        System.load(it.absolutePath)
+                        Log.d(TAG, "Loaded ${it.absolutePath}")
+                    }
+
+                    // Launch game
+                    kvGlobalGameConfig?.release()
+                    uiRun {
+                        updateTaskText("Launching game")
+                        try {
+                            val intent = Intent(self, MinecraftActivity::class.java)
+                            self.startActivity(intent)
+                            Utils.fileRemove(cacheDexDir)
+                            Log.d(TAG, "Removed $cacheDexDir")
+                            self.finish()
+                        } catch (e: Exception) {
+                            Log.e(TAG, e)
+                            throw e
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, e)
+                    dialog.dismiss()
+                    var stackTrace = ""
+                    e.stackTrace.forEach {
+                        stackTrace += "    at " + it.toString() + "\n"
+                    }
+                    alert("${e.toString()}\n$stackTrace", R.string.launch_failed)
+                    return
+                }
+            }
+
+            try {
+                val modList = Utils.getModsSupported(self, instanceInfo.versionName)
+                if (modList.isEmpty()) {
+                    updateProgress(2, iconLoadMods, iconPatchDex, true)
+                    normalProcess()
+                } else {
+                    ModLoader(self, classLoader).loadMods(modList, instanceInfo, {m, i ->
+                        if (i == 0) updateTaskText("Loading mod", m.name)
+                    }, {b, s ->
+                        if (b) {
+                            updateProgress(2, iconLoadMods, iconPatchDex)
+                            normalProcess()
+                        } else {
+                            dialog.dismiss()
+                            alert(s, R.string.launch_failed)
+                        }
+                    })
                 }
             } catch (e: Exception) {
-                Log.e(TAG, e)
+                Log.e(TAG, "Failed to load mod info", e)
                 dialog.dismiss()
-                var stackTrace = ""
-                e.stackTrace.forEach {
-                    stackTrace += "    at " + it.toString() + "\n"
-                }
-                alert("${e.toString()}\n$stackTrace", R.string.launch_failed)
+                alert(Log.getStackTraceString(e), R.string.launch_failed)
                 return@launch
             }
         }

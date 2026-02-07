@@ -36,6 +36,7 @@ import java.util.*
 import java.util.regex.Pattern
 import kotlin.math.roundToInt
 import androidx.core.graphics.createBitmap
+import dev1503.pocketlauncher.modloader.ModInfo
 
 object Utils {
     const val TAG = "Utils"
@@ -594,6 +595,43 @@ object Utils {
     }
     fun getModsDirPath(context: Context): String {
         return getDirIPath(context, "mods")
+    }
+    fun getAllMods(context: Context): List<ModInfo> {
+        val modList = mutableListOf<ModInfo>()
+        val modsDir = File(getModsDirPath(context))
+        if (modsDir.exists() && modsDir.isDirectory) {
+            modsDir.listFiles()?.forEach { it ->
+                if (it.isDirectory) {
+                    if (File(it, "manifest.json").exists()) {
+                        val manifest = KVConfig(context, File(it, "manifest.json").absolutePath)
+                        val supportedVersions = mutableListOf<String>()
+                        if (manifest.getType("supported_versions") == KVConfig.TYPE_ARRAY) {
+                            manifest.getArray("supported_versions").forEach { iu ->
+                                if (iu is String) supportedVersions.add(iu)
+                            }
+                        } else if (manifest.getType("supported_versions") == KVConfig.TYPE_STRING) {
+                            supportedVersions.add(manifest.getString("supported_versions", ""))
+                        }
+                        val modInfo = ModInfo(
+                            manifest.getString("name", ""),
+                            manifest.getString("package", ""),
+                            supportedVersions,
+                            it.absolutePath + "/",
+                            manifest.getString("loader", ""),
+                            manifest.getString("entry", ""),
+                            manifest.getString("entry_method", "")
+                        )
+                        if (modInfo.packageName.isNotEmpty() && modInfo.loader.isNotEmpty() && modInfo.entry.isNotEmpty()) {
+                            modList.add(modInfo)
+                        }
+                    }
+                }
+            }
+        }
+        return modList
+    }
+    fun getModsSupported(context: Context, version: String): List<ModInfo> {
+        return getAllMods(context).filter { it.isVersionSupported(version) }
     }
 
     interface FilesSearchWithContentListener {

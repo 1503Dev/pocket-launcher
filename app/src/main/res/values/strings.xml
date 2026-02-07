@@ -46,4 +46,6 @@
     <string name="global_game_storage">Global game storage</string>
     <string name="isolated_game_storage">Isolated game storage</string>
     <string name="working_directory_set_to">Working directory set to %s</string>
+    <string name="failed_to_load_mods">Failed to load mods</string>
+    <string name="mod_not_supported_version">Mod %s not supported minecraft version</string>
 </resources>
