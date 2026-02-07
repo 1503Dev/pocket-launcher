@@ -49,7 +49,7 @@ class ColumnLayout : LinearLayout {
     fun setContentLayout(view: ViewGroup) {
         contentContainer.removeAllViews()
         if (lastContentLayout != null) {
-            view.translationY = 200f
+            view.translationY = 144f
             view.alpha = 0.2f
         }
         contentContainer.addView(view, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
@@ -154,12 +154,14 @@ class ColumnLayout : LinearLayout {
                 } else {
                     background = Utils.getDrawableFromAttr(context, android.R.attr.selectableItemBackground)
                     titleView.setTextColor(Utils.getColorFromAttr(context, com.google.android.material.R.attr.colorOnPrimary))
-                    titleView.setTypeface(titleView.typeface, Typeface.NORMAL)
+                    titleView.typeface = originType
                     iconView.setColorFilter(Utils.getColorFromAttr(context, com.google.android.material.R.attr.colorOnPrimary))
                 }
             }
         var checkable: Boolean = false
         var onClick: OnClickListener? = null
+
+        lateinit var originType: Typeface
 
         constructor(context: Context) : super(context) {
             init()
@@ -173,17 +175,9 @@ class ColumnLayout : LinearLayout {
             init()
         }
 
-        constructor(
-            context: Context,
-            attrs: AttributeSet?,
-            defStyleAttr: Int,
-            defStyleRes: Int
-        ) : super(context, attrs, defStyleAttr, defStyleRes) {
-            init()
-        }
-
         private fun init() {
             inflate(context, R.layout.layout_column_layout_item_card, this)
+            originType = titleView.typeface
             orientation = HORIZONTAL
             setOnClickListener {
                 onClick?.onClick(this)

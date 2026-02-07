@@ -118,6 +118,7 @@ class FragmentDownload (self: AppCompatActivity) : Fragment(self, ColumnLayout(s
                         val config = JsonObject()
                         config.addProperty("version", 1)
                         config.addProperty("data_isolation", true)
+                        config.addProperty("data_storage_dir", ":INSTANCE/data/")
                         if (Utils.fileWriteString("$root/manifest.json", manifest.toString()) &&
                             Utils.fileWriteString("$root/config.json", config.toString()) &&
                             Utils.isInstanceEntityExist(context, "apk", sourceSha1)

@@ -51,9 +51,8 @@ public class BridgeB {
         Log.d(TAG, "After:onDestroy()");
     }
     public static String getLegacyExternalStoragePath(MinecraftActivity self, String path, String ori) {
-        String rez = bridgeA.getDataDirPath();
-        Log.d(TAG, "getLegacyExternalStoragePath(" + path + "): " + ori + " -> " + rez);
-        return rez;
+        Log.d(TAG, "getLegacyExternalStoragePath(" + path + "): " + ori);
+        return ori;
     }
     public static String getLegacyDeviceID(MinecraftActivity self, String ori) {
         Log.d(TAG, "getLegacyDeviceID(): " + ori);

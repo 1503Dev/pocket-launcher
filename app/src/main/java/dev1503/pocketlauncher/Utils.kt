@@ -428,7 +428,7 @@ object Utils {
         }
         return instances
     }
-    fun getInstanceInfo(context: Context, name: String?): InstanceInfo? {
+    fun getInstanceInfo(context: Context, name: String?, initKv: Boolean = false): InstanceInfo? {
         val instanceNames = getInstanceNames(context)
         if (!instanceNames.contains(name)) return null
         try {
@@ -453,7 +453,7 @@ object Utils {
                 entityType,
                 entity,
                 context,
-                false
+                initKv
             )
         } catch (e: Exception) {
             Log.e(TAG, e)
@@ -556,9 +556,9 @@ object Utils {
         stream.copyTo(destStream)
         destStream.close()
     }
-    fun getSelectedInstance(context: Context): InstanceInfo? {
+    fun getSelectedInstance(context: Context, initKv: Boolean = false): InstanceInfo? {
         return kvLauncherSettings?.getString("instance")?.let {
-            getInstanceInfo(context, it)
+            getInstanceInfo(context, it, initKv)
         }
     }
     fun getApkIcon(context: Context, apkPath: String): Drawable? {
@@ -585,6 +585,15 @@ object Utils {
         drawable?.draw(canvas)
 
         return bitmap
+    }
+    fun getGlobalGameStorageDirPath(context: Context): String {
+        return getDirIPath(context, "global")
+    }
+    fun getGlobalGameStorageDataDirPath(context: Context): String {
+        return getGlobalGameStorageDirPath(context) + "data/"
+    }
+    fun getModsDirPath(context: Context): String {
+        return getDirIPath(context, "mods")
     }
 
     interface FilesSearchWithContentListener {

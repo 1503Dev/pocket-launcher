@@ -30,8 +30,27 @@ open class InstanceInfo(
         }
     }
 
-    val dataIsolation: Boolean
+    var dataIsolation: Boolean
         get() = config.getBoolean("data_isolation", true)
+        set(value) {
+            config.set("data_isolation", value)
+        }
+    var dataStorageDir: String
+        get() = config.getString("data_storage_dir", ":INSTANCE/data/")
+        set(value) {
+            config.set("data_storage_dir", value)
+        }
+    val dataStorageDirParsed: String
+        get() {
+            if (dataIsolation) {
+                if (dataStorageDir == "") dataStorageDir = ":INSTANCE/data/"
+                val dir = dataStorageDir.replace(":INSTANCE", dirPath.removeSuffix("/"))
+                if (!dir.endsWith("/")) return "$dir/"
+                return dir
+            } else {
+                return Utils.getGlobalGameStorageDataDirPath(context!!)
+            }
+        }
     val iconBitmap: Bitmap?
         get() {
             if (context != null && apkPath != null) {

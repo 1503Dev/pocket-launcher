@@ -41,4 +41,9 @@
     <string name="edit_instance">Edit Instance</string>
     <string name="settings">Settings</string>
     <string name="mods">Mods</string>
+    <string name="working_directory">Working Directory</string>
+    <string name="instance_icon">Instance Icon</string>
+    <string name="global_game_storage">Global game storage</string>
+    <string name="isolated_game_storage">Isolated game storage</string>
+    <string name="working_directory_set_to">Working directory set to %s</string>
 </resources>

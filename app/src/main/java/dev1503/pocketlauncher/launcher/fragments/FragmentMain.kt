@@ -267,7 +267,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         }
     }
     fun editInstance() {
-        val ii = Utils.getSelectedInstance(self)
+        val ii = Utils.getSelectedInstance(self, true)
         if (ii == null) {
             Snackbar.make(layout, self.getString(R.string.no_instance_selected), Snackbar.LENGTH_SHORT).show()
             return

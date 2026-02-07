@@ -24,35 +24,16 @@ public class BridgeA {
         utils.setKvLauncherSettings(kvLauncherSettings);
         utils.setKvGlobalGameConfig(kvGlobalGameConfig);
 
-        InstanceInfo selectedInstance = utils.getSelectedInstance(self);
+        InstanceInfo selectedInstance = utils.getSelectedInstance(self, true);
         if (selectedInstance == null) {
             selectedInstance = new InstanceInfo(null, "", 0, 0, "", "", "", "", null, false);
         }
 
-        this.instanceInfo = new InstanceInfo(
-                selectedInstance.getName(),
-                selectedInstance.getVersionName(),
-                selectedInstance.getVersionCode(),
-                selectedInstance.getInstallTime(),
-                selectedInstance.getSource(),
-                selectedInstance.getDirPath(),
-                selectedInstance.getEntityType(),
-                selectedInstance.getEntity(),
-                self,
-                true
-        );
+        this.instanceInfo = selectedInstance;
 
         Log.i(TAG, "Init");
     }
-
-    public boolean isDataIsolationEnabled() {
-        return instanceInfo.getDataIsolation();
-    }
     public String getDataDirPath() {
-        if (isDataIsolationEnabled()) {
-            return instanceInfo.getDirPath() + "data/";
-        } else {
-            return utils.getDirIPath(self, "global_game_data");
-        }
+        return instanceInfo.getDataStorageDirParsed();
     }
 }
