@@ -82,6 +82,10 @@ object Utils {
     }
 
     fun getDataDirPath(context: Context): String {
+        return getADataDirPath(context) + "pocket_launcher/"
+    }
+
+    fun getADataDirPath(context: Context): String {
         return if (android.os.Build.VERSION.SDK_INT >= 24) {
             context.dataDir.absolutePath + "/"
         } else {
@@ -90,7 +94,7 @@ object Utils {
     }
 
     fun getXalDirPath(context: Context): String {
-        return getDataDirPath(context) + "xal/"
+        return getADataDirPath(context) + "xal/"
     }
 
     fun getCurrentXalIdRx(context: Context): Single<String>? {
@@ -531,6 +535,13 @@ object Utils {
     }
     fun getDirIPath(context: Context, name: String): String {
         val dir = File(getDataDirPath(context), name)
+        if (!dir.exists()) {
+            dir.mkdirs()
+        }
+        return dir.absolutePath + "/"
+    }
+    fun getADirIPath(context: Context, name: String): String {
+        val dir = File(getADataDirPath(context), name)
         if (!dir.exists()) {
             dir.mkdirs()
         }

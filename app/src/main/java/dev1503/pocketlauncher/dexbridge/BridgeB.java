@@ -29,7 +29,7 @@ public class BridgeB {
     }
     public static void afterOnCreate(MinecraftActivity self, Bundle bundle) {
         Log.d(TAG, "After:onCreate(" + bundle + ")");
-        String cacheLibsDir = utils.getDirIPath(self, "cache/launcher/native_libs");
+        String cacheLibsDir = utils.getADirIPath(self, "cache/launcher/native_libs");
         utils.fileRemove(cacheLibsDir);
         Log.d(TAG, "Removed " + cacheLibsDir);
     }

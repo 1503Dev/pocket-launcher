@@ -1,22 +1,21 @@
 package dev1503.pocketlauncher.launcher.widgets
 
 import android.animation.Animator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Typeface
-import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
-import android.view.ViewPropertyAnimator
+import android.view.animation.AccelerateDecelerateInterpolator
+import android.view.animation.OvershootInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.annotation.RequiresApi
-import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
-import okhttp3.internal.wait
 
 class ColumnLayout : LinearLayout {
     val SLIDE_ANIM_DURATION = 125L
@@ -24,6 +23,8 @@ class ColumnLayout : LinearLayout {
     lateinit var itemsContainer: LinearLayout
     lateinit var contentContainer: ViewGroup
     lateinit var layoutLeft: ViewGroup
+
+     var lastContentLayout: ViewGroup? = null
 
     constructor(context: Context) : super(context) {
         init()
@@ -37,31 +38,40 @@ class ColumnLayout : LinearLayout {
         init()
     }
 
-    constructor(
-        context: Context,
-        attrs: AttributeSet?,
-        defStyleAttr: Int,
-        defStyleRes: Int
-    ) : super(context, attrs, defStyleAttr, defStyleRes) {
-        init()
-    }
-
     private fun init() {
         inflate(context, R.layout.layout_column_layout, this)
         orientation = HORIZONTAL
-        itemsContainer = findViewWithTag<LinearLayout>("items_container")!!
-        layoutLeft = findViewWithTag<ViewGroup>("layout_left")!!
-        contentContainer = findViewWithTag<ViewGroup>("content")!!
+        itemsContainer = findViewWithTag("items_container")!!
+        layoutLeft = findViewWithTag("layout_left")!!
+        contentContainer = findViewWithTag("content")!!
     }
 
     fun setContentLayout(view: ViewGroup) {
         contentContainer.removeAllViews()
+        if (lastContentLayout != null) {
+            view.translationY = 200f
+            view.alpha = 0.2f
+        }
         contentContainer.addView(view, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+
+        if (lastContentLayout != null) {
+            val translateAnimator = ObjectAnimator.ofFloat(view, "translationY", 0f)
+            translateAnimator.interpolator = AccelerateDecelerateInterpolator()
+
+            val alphaAnimator = ObjectAnimator.ofFloat(view, "alpha", 1f)
+            alphaAnimator.interpolator = AccelerateDecelerateInterpolator()
+
+            AnimatorSet().apply {
+                playTogether(translateAnimator, alphaAnimator)
+                duration = 125
+                start()
+            }
+        }
+        lastContentLayout = view
     }
 
     fun setContentLayout(layoutId: Int) {
-        contentContainer.removeAllViews()
-        contentContainer.addView(View.inflate(context, layoutId, null), LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT))
+        setContentLayout(View.inflate(context, layoutId, null) as ViewGroup)
     }
 
     fun addDivider(text: CharSequence) {
@@ -142,7 +152,7 @@ class ColumnLayout : LinearLayout {
                     titleView.setTypeface(titleView.typeface, Typeface.BOLD)
                     iconView.setColorFilter(Utils.getColorFromAttr(context, androidx.appcompat.R.attr.colorPrimary))
                 } else {
-                    setBackground(Utils.getDrawableFromAttr(context, android.R.attr.selectableItemBackground))
+                    background = Utils.getDrawableFromAttr(context, android.R.attr.selectableItemBackground)
                     titleView.setTextColor(Utils.getColorFromAttr(context, com.google.android.material.R.attr.colorOnPrimary))
                     titleView.setTypeface(titleView.typeface, Typeface.NORMAL)
                     iconView.setColorFilter(Utils.getColorFromAttr(context, com.google.android.material.R.attr.colorOnPrimary))
@@ -176,10 +186,10 @@ class ColumnLayout : LinearLayout {
             inflate(context, R.layout.layout_column_layout_item_card, this)
             orientation = HORIZONTAL
             setOnClickListener {
+                onClick?.onClick(this)
                 if (checkable) {
                     checked = true
                 }
-                onClick?.onClick(this)
             }
         }
 
@@ -190,18 +200,22 @@ class ColumnLayout : LinearLayout {
         fun setIcon(icon: Bitmap) {
             iconView.layoutParams.height = Utils.dp2px(context, 28f)
             iconView.setImageBitmap(icon)
+            iconView.colorFilter = null
         }
         fun setIcon(icon: Int) {
             iconView.layoutParams.height = Utils.dp2px(context, 28f)
             iconView.setImageResource(icon)
+            iconView.setColorFilter(Utils.getColorFromAttr(context, com.google.android.material.R.attr.colorOnPrimary))
         }
         fun setIconBig(icon: Bitmap) {
             setIcon(icon)
             iconView.layoutParams.height = Utils.dp2px(context, 42f)
+            iconView.colorFilter = null
         }
         fun setIconBig(icon: Int) {
             setIcon(icon)
             iconView.layoutParams.height = Utils.dp2px(context, 42f)
+            iconView.setColorFilter(Utils.getColorFromAttr(context, com.google.android.material.R.attr.colorOnPrimary))
         }
 
         fun setDescription(description: CharSequence) {

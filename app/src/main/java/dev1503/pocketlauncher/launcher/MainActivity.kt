@@ -108,7 +108,8 @@ class MainActivity : AppCompatActivity() {
     }
     @SuppressLint("SetTextI18n")
     fun switchFragment(string: String) {
-        val fragment = fragments[string]
+        var fragment: Fragment? = null
+        fragment = fragments[string]
         if (fragment != null && string != currentFragmentName) {
             val curFragment: Fragment? = fragments[currentFragmentName]
             if (curFragment != null) {
@@ -146,6 +147,28 @@ class MainActivity : AppCompatActivity() {
             lastFragmentName = currentFragmentName
             currentFragmentName = string
         }
+    }
+    @SuppressLint("SetTextI18n")
+    fun switchFragment(fragment: Fragment, pageName: String) {
+        fragments.put(fragment.fragmentName, fragment)
+        val string = fragment.fragmentName
+        val curFragment: Fragment? = fragments[currentFragmentName]
+        (curFragment?.layout as ColumnLayout).slideOut {
+            layoutContainer.removeAllViews()
+            fragment.init()
+            Utils.setTimeout({
+                runOnUiThread {
+                    layoutContainer.removeAllViews()
+                    layoutContainer.addView(fragment.layout)
+                    (fragment.layout as ColumnLayout).slideIn()
+                }
+            }, 10)
+        }
+        titleBarIcon.visibility = View.GONE
+        titleBarBack.visibility = View.VISIBLE
+        titleBarTitle.text = pageName
+        lastFragmentName = currentFragmentName
+        currentFragmentName = string
     }
     @SuppressLint("MissingSuperCall")
     override fun onBackPressed() {

@@ -267,7 +267,12 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         }
     }
     fun editInstance() {
-        alert(R.string.edit_instance)
+        val ii = Utils.getSelectedInstance(self)
+        if (ii == null) {
+            Snackbar.make(layout, self.getString(R.string.no_instance_selected), Snackbar.LENGTH_SHORT).show()
+            return
+        }
+        activity.switchFragment(FragmentEditInstance(self, ii), self.getString(R.string.edit_instance) + " - " + ii.name)
     }
 
     @SuppressLint("UnsafeDynamicallyLoadedCode", "DiscouragedPrivateApi")
@@ -334,13 +339,13 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 val addDexPath = pathList.javaClass.getDeclaredMethod("addDexPath", String::class.java, File::class.java)
 
                 updateTaskText("Clearing cache")
-                Utils.fileRemove(Utils.getDirIPath(self, "cache/launcher"))
+                Utils.fileRemove(Utils.getADirIPath(self, "cache/launcher"))
 
                 val source = instanceInfo.apkPath
 
                 // Load dex files
                 updateTaskText("Extracting dex files")
-                val cacheDexDir = Utils.getDirIPath(self, "cache/launcher/dex")
+                val cacheDexDir = Utils.getADirIPath(self, "cache/launcher/dex")
                 ZipFile(source).use { zipFile ->
                     for (i in 4 downTo 0) {
                         val dexName = "classes" + (if (i == 0) "" else i.toString()) + ".dex"
@@ -394,7 +399,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 // Load so files
                 updateProgress(4, iconPatchAsset, iconPatchSo)
                 updateTaskText("Extracting shared libraries")
-                val cacheLibDir = Utils.getDirIPath(self, "cache/launcher/native_libs")
+                val cacheLibDir = Utils.getADirIPath(self, "cache/launcher/native_libs")
                 ZipFile(source).use { zipFile ->
                     val libDir = "lib/arm64-v8a/"
 

@@ -39,4 +39,6 @@
     <string name="android_system_version_not_supported">Your Android system version Android %s (SDK %s) is not supported. Currently, Android 9.0 (SDK 28) or above is required. Please wait for future updates to gain support.</string>
     <string name="patch_asset">Patch asset</string>
     <string name="edit_instance">Edit Instance</string>
+    <string name="settings">Settings</string>
+    <string name="mods">Mods</string>
 </resources>
