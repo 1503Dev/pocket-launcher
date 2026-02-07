@@ -12,6 +12,7 @@ import dev1503.pocketlauncher.InstanceInfo
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
+import dev1503.pocketlauncher.launcher.widgets.ModListView
 
 class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceInfo) : Fragment(self, ColumnLayout(self), "FragmentEditInstance") {
     private val col = layout as ColumnLayout
@@ -82,6 +83,8 @@ class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceI
 
     fun initModsView(): ScrollView {
         val l = LinearLayout.inflate(self, R.layout.layout_launcher_edit_instance_mods, null) as ScrollView
+        val modListView = l.findViewWithTag<ModListView>("mod_list")
+        modListView.modList = Utils.getModsSupported(self, instanceInfo.versionName)
         return l
     }
 

@@ -618,6 +618,8 @@ object Utils {
                             supportedVersions,
                             it.absolutePath + "/",
                             manifest.getString("loader", ""),
+                            manifest.getString("version", ""),
+                            manifest.getString("author", ""),
                             manifest.getString("entry", ""),
                             manifest.getString("entry_method", "")
                         )

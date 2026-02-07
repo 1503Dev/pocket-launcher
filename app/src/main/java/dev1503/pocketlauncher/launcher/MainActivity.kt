@@ -5,12 +5,16 @@ import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
+import android.view.WindowInsetsController
 import android.widget.ImageView
 import android.widget.TextView
 import android.window.OnBackInvokedDispatcher
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import dev1503.pocketlauncher.GlobalDebugWindow
 import dev1503.pocketlauncher.KVConfig
+import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.launcher.fragments.Fragment
@@ -179,5 +183,33 @@ class MainActivity : AppCompatActivity() {
         Utils.kvLauncherSettings?.release()
         Utils.kvGlobalGameConfig?.release()
         super.onDestroy()
+    }
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        Log.d(TAG, "onWindowFocusChanged: $hasFocus")
+        if (hasFocus) {
+            hideSystemBars()
+        } else if (GlobalDebugWindow.instance != null) {
+            GlobalDebugWindow.instance?.refreshViews()
+        }
+    }
+    private fun hideSystemBars() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            window.insetsController?.let { controller ->
+                controller.hide(WindowInsets.Type.navigationBars())
+                controller.hide(WindowInsets.Type.statusBars())
+                controller.systemBarsBehavior =
+                    WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            }
+        } else {
+            @Suppress("DEPRECATION")
+            window.decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                            or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    )
+        }
     }
 }

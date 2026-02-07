@@ -1,6 +1,9 @@
 package dev1503.pocketlauncher.modloader
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import dev1503.pocketlauncher.Log
+import java.io.File
 
 class ModInfo (
     val name: String,
@@ -8,6 +11,8 @@ class ModInfo (
     val supportedVersions: List<String>,
     val dirPath: String,
     val loader: String,
+    val version: String,
+    val author: String,
     val entry: String,
     val entryMethod: String = "") {
 
@@ -21,6 +26,20 @@ class ModInfo (
         get() {
             return dirPath + entry
         }
+    val icon: Bitmap?
+        get () {
+            var iconFile = File(dirPath + "icon.png")
+            if (!iconFile.exists()) {
+                iconFile = File(dirPath + "icon.jpg")
+                if (!iconFile.exists()) {
+                    iconFile = File(dirPath + "icon.jpeg")
+                    if (!iconFile.exists()) {
+                        return null
+                    }
+                }
+            }
+            return BitmapFactory.decodeFile(iconFile.absolutePath)
+        }
 
     init {
         Log.d(TAG, """ModInfo {
@@ -29,6 +48,8 @@ class ModInfo (
             |    supportedVersions: $supportedVersions
             |    dirPath: $dirPath
             |    loader: $loader
+            |    version: $version
+            |    author: $author
             |    entry: $entry
             |    entryMethod: $entryMethod
             |}""".trimMargin())
