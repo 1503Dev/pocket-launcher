@@ -10,11 +10,14 @@ import android.widget.LinearLayout.VERTICAL
 import android.widget.ScrollView
 import android.widget.TextView
 import com.google.android.material.checkbox.MaterialCheckBox
+import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils.dp2px
 import dev1503.pocketlauncher.modloader.ModInfo
 
 class ModListView: ScrollView {
+    val TAG = "ModListView"
+
     var modList: List<ModInfo>? = emptyList()
         get() = field
         set(value) {
@@ -29,6 +32,7 @@ class ModListView: ScrollView {
         orientation = VERTICAL
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
+    val modListItems: MutableList<ModListItem> = mutableListOf()
 
     constructor(context: Context) : super(context) {
         init()
@@ -54,6 +58,7 @@ class ModListView: ScrollView {
                 _onModChecked(modInfo, isChecked == MaterialCheckBox.STATE_CHECKED)
             }
         }
+        modListItems.add(view)
         container.addView(view)
     }
 
@@ -62,6 +67,8 @@ class ModListView: ScrollView {
     }
 
     class ModListItem: LinearLayout {
+        val TAG = "ModListView.ModListItem"
+
         val checkbox: MaterialCheckBox
             get() = findViewWithTag<MaterialCheckBox>("checkbox")!!
         val iconView: ImageView
@@ -74,12 +81,13 @@ class ModListView: ScrollView {
         var modInfo: ModInfo? = null
             @SuppressLint("SetTextI18n")
             set(value) {
+                field = value
                 if (value?.icon != null) {
                     iconView.setImageBitmap(value.icon)
                 }
                 titleView.text = value?.name ?: value?.packageName ?: "Unknown Label"
                 if (value?.version != null) {
-                    descriptionView.text = value.version
+                    descriptionView.text = "v" + value.version
                 }
             }
 
@@ -98,6 +106,11 @@ class ModListView: ScrollView {
         private fun init() {
             inflate(context, R.layout.layout_mod_list_view_item, this)
             orientation = HORIZONTAL
+        }
+    }
+    fun setEnabledMods(modIds: List<String>) {
+        modListItems.forEach { modListItem ->
+            modListItem.checkbox.isChecked = modIds.contains(modListItem.modInfo?.id)
         }
     }
 }

@@ -10,6 +10,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -68,10 +69,10 @@ public final class Log {
         }
 
         if (tr != null) {
-            msg = msg + "\n" + android.util.Log.getStackTraceString(tr);
+            msg = msg + (msg.isEmpty() ? "" : "\n") + getStackTraceString(tr);
         }
 
-        String[] lines = msg.split("\n");
+        String[] lines = msg.split("\n", -1);
         StringBuilder fullLog = new StringBuilder();
 
         for (int i = 0; i < lines.length; i++) {
@@ -91,6 +92,17 @@ public final class Log {
 
         int start = 0;
         int newTextLength = newText.length();
+
+        int currentLogTypeColor = 0;
+        char typeChar = typeStr.charAt(0);
+        switch (typeChar) {
+            case 'W': currentLogTypeColor = warnColor; break;
+            case 'E': currentLogTypeColor = errorColor; break;
+            case 'D': currentLogTypeColor = debugColor; break;
+            case 'I': currentLogTypeColor = infoColor; break;
+            case 'V': currentLogTypeColor = verboseColor; break;
+            case 'A': currentLogTypeColor = assertColor; break;
+        }
 
         while (start < newTextLength) {
             int lineEnd = newText.indexOf('\n', start);
@@ -140,22 +152,29 @@ public final class Log {
                                 start + tagStart, start + tagEnd + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                     }
                 } else {
-                    int lineColor = findTypeColorForContinuationLine(newText, start);
-                    if (lineColor == 0) {
-                        char typeChar = typeStr.charAt(0);
-                        switch (typeChar) {
-                            case 'W': lineColor = warnColor; break;
-                            case 'E': lineColor = errorColor; break;
-                            case 'D': lineColor = debugColor; break;
-                            case 'I': lineColor = infoColor; break;
-                            case 'V': lineColor = verboseColor; break;
-                            case 'A': lineColor = assertColor; break;
+                    if (currentLine.startsWith(" ".repeat(firstLinePrefix.length()))) {
+                        if (currentLogTypeColor != 0) {
+                            spannable.setSpan(new ForegroundColorSpan(currentLogTypeColor),
+                                    start, lineEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
                         }
-                    }
+                    } else {
+                        int lineColor = 0;
+                        if (lineLength > 13) {
+                            char firstChar = currentLine.charAt(13);
+                            switch (firstChar) {
+                                case 'W': lineColor = warnColor; break;
+                                case 'E': lineColor = errorColor; break;
+                                case 'D': lineColor = debugColor; break;
+                                case 'I': lineColor = infoColor; break;
+                                case 'V': lineColor = verboseColor; break;
+                                case 'A': lineColor = assertColor; break;
+                            }
+                        }
 
-                    if (lineColor != 0) {
-                        spannable.setSpan(new ForegroundColorSpan(lineColor),
-                                start, lineEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        if (lineColor != 0) {
+                            spannable.setSpan(new ForegroundColorSpan(lineColor),
+                                    start, lineEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+                        }
                     }
                 }
             }
@@ -262,7 +281,8 @@ public final class Log {
 
     @NonNull
     public static String getStackTraceString(@Nullable Throwable tr) {
-        return android.util.Log.getStackTraceString(tr);
+        assert tr != null;
+        return Utils.INSTANCE.stackTraceToString(tr);
     }
 
     public static int d(@Nullable String tag, @NonNull String msg) {

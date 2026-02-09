@@ -13,11 +13,40 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            app:cardElevation="2dp"
+            app:cardCornerRadius="8dp"
+            app:cardBackgroundColor="?attr/colorAccent"
+            android:tag="info_no_mods">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="6dp"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:drawableLeft="@drawable/info_20px"
+                    android:textColor="#FF004F6A"
+                    android:drawableTint="#FF004F6A"
+                    android:gravity="center_vertical"
+                    android:text="@string/information"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FF004F6A"
+                    android:gravity="center_vertical"
+                    android:paddingStart="4dp"
+                    android:text="@string/infomation_no_mods"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             app:strokeWidth="0dp"
             app:cardElevation="2dp"
             app:cardCornerRadius="8dp"
-            app:cardBackgroundColor="@color/card_background">
-
+            app:cardBackgroundColor="@color/card_background"
+            android:tag="mods">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

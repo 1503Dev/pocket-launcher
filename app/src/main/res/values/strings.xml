@@ -48,4 +48,9 @@
     <string name="working_directory_set_to">Working directory set to %s</string>
     <string name="failed_to_load_mods">Failed to load mods</string>
     <string name="mod_not_supported_version">Mod %s not supported minecraft version</string>
+    <string name="invalid_mod_package_name">Invalid mod package name</string>
+    <string name="failed_to_change_mod_status">Failed to change mod status</string>
+    <string name="invalid_mod_version">Invalid mod version name</string>
+    <string name="information">Information</string>
+    <string name="infomation_no_mods">No mod is adapted to the current instance</string>
 </resources>

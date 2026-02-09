@@ -10,8 +10,8 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 class KVConfig(
-    private val context: Context,
-    private val filePath: String
+    val context: Context,
+    val filePath: String
 ) {
 
     companion object {
@@ -28,11 +28,16 @@ class KVConfig(
     val lock = ReentrantReadWriteLock()
     val file: File = File(filePath)
     val cache: MutableMap<String, Any?> = mutableMapOf()
+    val TAG = "KVConfig/${file.name}"
 
     var isReleased: Boolean = false
 
     init {
         loadFromFile()
+        if (GlobalDebugWindow.instance != null) {
+            GlobalDebugWindow.instance!!.updateKVConfigStatus(this, true)
+        }
+        Log.i(TAG, "Init")
     }
     fun <T> set(key: String, value: T?) {
         if (isReleased) return
@@ -43,6 +48,7 @@ class KVConfig(
                 cache[key] = value
             }
             saveToFile()
+            Log.d(TAG, "Set $key = $value")
         }
     }
     fun <T> get(key: String, defaultValue: T? = null): T? {
@@ -192,9 +198,9 @@ class KVConfig(
         }
 
         lock.write {
-            // 将列表序列化为JSON字符串存储
             cache[key] = gson.toJson(list)
             saveToFile()
+            Log.d(TAG, "SetArray: $key = $list")
         }
     }
 
@@ -207,6 +213,7 @@ class KVConfig(
         lock.write {
             cache.clear()
             saveToFile()
+            Log.d(TAG, "Clear")
         }
     }
     fun contains(key: String): Boolean {
@@ -268,12 +275,16 @@ class KVConfig(
             throw IOException("Failed to save config", e)
         }
     }
-    fun release() {
+    fun release(reason: String = "") {
         if (isReleased) return
         isReleased = true
         lock.write {
             cache.clear()
         }
+        if (GlobalDebugWindow.instance != null) {
+            GlobalDebugWindow.instance!!.updateKVConfigStatus(this, false)
+        }
+        Log.i(TAG, "Released" + if (reason.isNotEmpty()) " $reason" else "")
     }
     fun getType(key: String): Int? {
         if (isReleased) return null

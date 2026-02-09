@@ -53,9 +53,8 @@ class MainActivity : AppCompatActivity() {
             MaterialAlertDialogBuilder(self)
                 .setTitle(R.string.unsupported_android_system)
                 .setMessage(getString(R.string.android_system_version_not_supported, Build.VERSION.RELEASE, Build.VERSION.SDK_INT.toString()))
-                .setCancelable(false)
+                .setCancelable(true)
                 .show()
-            return
         }
 
         Utils.kvGlobalGameConfig = KVConfig(self, Utils.getDataDirPath(self) + "global_game_config.json")
@@ -189,7 +188,7 @@ class MainActivity : AppCompatActivity() {
         if (hasFocus) {
             hideSystemBars()
         } else if (GlobalDebugWindow.instance != null) {
-            GlobalDebugWindow.instance?.refreshViews()
+//            GlobalDebugWindow.instance?.refreshViews()
         }
     }
     private fun hideSystemBars() {

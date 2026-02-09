@@ -40,19 +40,23 @@ class ModInfo (
             }
             return BitmapFactory.decodeFile(iconFile.absolutePath)
         }
+    val id: String
+        get() {
+            return "$packageName:$version"
+        }
 
     init {
-        Log.d(TAG, """ModInfo {
-            |    name: $name
-            |    packageName: $packageName
-            |    supportedVersions: $supportedVersions
-            |    dirPath: $dirPath
-            |    loader: $loader
-            |    version: $version
-            |    author: $author
-            |    entry: $entry
-            |    entryMethod: $entryMethod
-            |}""".trimMargin())
+//        Log.d(TAG, """ModInfo {
+//            |    name: $name
+//            |    packageName: $packageName
+//            |    supportedVersions: $supportedVersions
+//            |    dirPath: $dirPath
+//            |    loader: $loader
+//            |    version: $version
+//            |    author: $author
+//            |    entry: $entry
+//            |    entryMethod: $entryMethod
+//            |}""".trimMargin())
     }
 
     fun isVersionSupported(version: String): Boolean {

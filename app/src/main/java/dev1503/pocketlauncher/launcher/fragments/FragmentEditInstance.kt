@@ -6,9 +6,12 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import dev1503.pocketlauncher.InstanceInfo
+import dev1503.pocketlauncher.KVConfig
+import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
@@ -17,6 +20,9 @@ import dev1503.pocketlauncher.launcher.widgets.ModListView
 class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceInfo) : Fragment(self, ColumnLayout(self), "FragmentEditInstance") {
     private val col = layout as ColumnLayout
     val checkableItems = ArrayList<ColumnLayout.ColumnLayoutItem>()
+    val instanceConfig = KVConfig(self, instanceInfo.dirPath + "config.json")
+
+    val TAG = "FragmentEditInstance/${instanceInfo.name}"
 
     init {
         col.setContentLayout(initSettingsView())
@@ -84,10 +90,37 @@ class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceI
     fun initModsView(): ScrollView {
         val l = LinearLayout.inflate(self, R.layout.layout_launcher_edit_instance_mods, null) as ScrollView
         val modListView = l.findViewWithTag<ModListView>("mod_list")
-        modListView.modList = Utils.getModsSupported(self, instanceInfo.versionName)
+        val modListCard = l.findViewWithTag<CardView>("mods")
+        val noModsCard = l.findViewWithTag<CardView>("info_no_mods")
+        val supportedMods = Utils.getModsSupported(self, instanceInfo.versionName)
+        if (supportedMods.isEmpty()) {
+            modListCard.visibility = View.GONE
+            Log.w(TAG, "No supported mods found for version ${instanceInfo.versionName}")
+            return l
+        }
+        noModsCard.visibility = View.GONE
+        modListView.modList = supportedMods
+        val mods = instanceConfig.getArray("mods", mutableListOf()).toMutableSet()
+        modListView.setEnabledMods(mods.toList() as List<String>)
+        modListView.onModCheckListener = { mod, checked ->
+            val modPackage = mod.packageName
+            val modVersion = mod.version
+
+            if (!Utils.testModPackageName(modPackage)) {
+                alert(self.getString(R.string.invalid_mod_package_name), self.getString(R.string.failed_to_change_mod_status))
+            } else if (!Utils.testModVersionName(modVersion)) {
+                alert(self.getString(R.string.invalid_mod_version), self.getString(R.string.failed_to_change_mod_status))
+            } else {
+                if (checked) {
+                    mods.add(mod.id)
+                } else {
+                    mods.remove(mod.id)
+                }
+                instanceConfig.setArray("mods", mods.toList())
+            }
+        }
         return l
     }
-
     fun getCheckableItemOnClick(): View.OnClickListener {
         return View.OnClickListener {
             checkableItems.forEach { item ->

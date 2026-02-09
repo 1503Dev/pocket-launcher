@@ -635,6 +635,26 @@ object Utils {
     fun getModsSupported(context: Context, version: String): List<ModInfo> {
         return getAllMods(context).filter { it.isVersionSupported(version) }
     }
+    fun stackTraceToString(e: Throwable): String {
+        var stackTrace = e.toString()
+        e.stackTrace.forEach {
+            stackTrace += "\n    at $it"
+        }
+        return stackTrace
+    }
+    fun testModPackageName(packageName: String): Boolean {
+        return packageName.matches(Regex("^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)*$")) &&
+                !packageName.endsWith(".")
+    }
+    fun testModVersionName(version: String): Boolean {
+        return version.isNotEmpty() && !version.contains(":") && !version.startsWith(" ")
+    }
+    fun getModInfoByPackageAndVersion(context: Context, packageName: String, version: String): ModInfo? {
+        return getAllMods(context).firstOrNull { it.packageName == packageName && it.version == version }
+    }
+    fun getModsInfoByPackagesAndVersions(context: Context, packageNames: List<String>, versions: List<String>): List<ModInfo> {
+        return getAllMods(context).filter { it.packageName in packageNames && it.version in versions }
+    }
 
     interface FilesSearchWithContentListener {
         fun onSearchComplete(files: List<File>, fileContents: List<String>)

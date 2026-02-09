@@ -3,6 +3,7 @@ package dev1503.pocketlauncher.launcher.fragments
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Build
 import android.view.Gravity
 import android.view.Menu
 import android.view.View
@@ -45,6 +46,8 @@ import java.io.File
 import java.util.zip.ZipFile
 
 class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self), "FragmentMain") {
+    val TAG = "FragmentMain"
+
     private lateinit var itemAccount: ColumnLayout.ColumnLayoutItem
     private lateinit var itemEditInstance: ColumnLayout.ColumnLayoutItem
     private val activity: MainActivity = self as MainActivity
@@ -84,7 +87,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         val btnLaunch = columnLayout.contentContainer.findViewWithTag<View>("btn_launch")
         btnLaunch.setOnClickListener {
             try {
-                val instanceInfo = Utils.getInstanceInfo(self, kvLauncherSettings?.getString("instance", ""))
+                val instanceInfo = Utils.getInstanceInfo(self, kvLauncherSettings?.getString("instance", ""), true)
                 if (instanceInfo == null) {
                     Snackbar.make(layout, R.string.no_instance_selected, Snackbar.LENGTH_SHORT).show()
                 } else {
@@ -231,44 +234,6 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         popup.show()
     }
 
-    fun alert(message: String, title: String = "") {
-        val dialog = MaterialAlertDialogBuilder(self)
-            .setMessage(message)
-            .setNegativeButton(R.string.ok, {_,_ -> })
-            .setCancelable(false)
-        if (title.isNotEmpty()) dialog.setTitle(title)
-        dialog.show()
-    }
-    fun alert(message: Int, title: Int = 0) {
-        uiRun {
-            val dialog = MaterialAlertDialogBuilder(self)
-                .setMessage(message)
-                .setNegativeButton(R.string.ok, {_,_ -> })
-                .setCancelable(false)
-            if (title != 0) dialog.setTitle(title)
-            dialog.show()
-        }
-    }
-    fun alert(message: Int, title: String) {
-        uiRun {
-            val dialog = MaterialAlertDialogBuilder(self)
-                .setMessage(message)
-                .setNegativeButton(R.string.ok, {_,_ -> })
-                .setCancelable(false)
-            if (title.isNotEmpty()) dialog.setTitle(title)
-            dialog.show()
-        }
-    }
-    fun alert(message: String, title: Int = 0) {
-        uiRun {
-            val dialog = MaterialAlertDialogBuilder(self)
-                .setMessage(message)
-                .setNegativeButton(R.string.ok, {_,_ -> })
-                .setCancelable(false)
-            if (title != 0) dialog.setTitle(title)
-            dialog.show()
-        }
-    }
     fun editInstance() {
         val ii = Utils.getSelectedInstance(self, true)
         if (ii == null) {
@@ -363,6 +328,8 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                                     sink.writeAll(source)
                                 }
                             }
+
+                            Log.d(TAG, "Extracted $dexName to ${mcDex.absolutePath}")
 
                             if (mcDex.setReadOnly()) {
                                 updateTaskText("Add dex file to pathList", dexName)
@@ -483,17 +450,24 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 } catch (e: Exception) {
                     Log.e(TAG, e)
                     dialog.dismiss()
-                    var stackTrace = ""
-                    e.stackTrace.forEach {
-                        stackTrace += "    at " + it.toString() + "\n"
+                    if (e is NoSuchMethodException && e.message?.contains("addNativePath") == true) {
+                        alert(
+                            self.getString(
+                                R.string.android_system_version_not_supported,
+                                Build.VERSION.RELEASE,
+                                Build.VERSION.SDK_INT.toString()
+                            ),
+                            R.string.unsupported_android_system
+                        )
+                        return
                     }
-                    alert("${e.toString()}\n$stackTrace", R.string.launch_failed)
+                    alert(Log.getStackTraceString(e), R.string.launch_failed)
                     return
                 }
             }
 
             try {
-                val modList = Utils.getModsSupported(self, instanceInfo.versionName)
+                val modList = instanceInfo.enabledMods
                 if (modList.isEmpty()) {
                     updateProgress(2, iconLoadMods, iconPatchDex, true)
                     normalProcess()
