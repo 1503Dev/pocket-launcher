@@ -48,7 +48,7 @@ class KVConfig(
                 cache[key] = value
             }
             saveToFile()
-            Log.d(TAG, "Set $key = $value")
+//            Log.d(TAG, "Set $key = $value")
         }
     }
     fun <T> get(key: String, defaultValue: T? = null): T? {
@@ -200,7 +200,7 @@ class KVConfig(
         lock.write {
             cache[key] = gson.toJson(list)
             saveToFile()
-            Log.d(TAG, "SetArray: $key = $list")
+//            Log.d(TAG, "SetArray: $key = $list")
         }
     }
 

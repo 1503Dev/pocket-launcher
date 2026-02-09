@@ -21,6 +21,7 @@ import dev1503.pocketlauncher.launcher.fragments.Fragment
 import dev1503.pocketlauncher.launcher.fragments.FragmentDownload
 import dev1503.pocketlauncher.launcher.fragments.FragmentMain
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
+import dev1503.pocketlauncher.mod.PocketLauncher
 
 class MainActivity : AppCompatActivity() {
     companion object {

@@ -34,7 +34,7 @@ android {
         //noinspection OldTargetApi
         targetSdk 35
         versionCode 1
-        versionName "0.1.0"
+        versionName new Date().format('yyyyMMddHHmm') + ".$versionCode"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -56,6 +56,12 @@ android {
     aaptOptions {
         additionalParameters "--package-id", "0x40"
         additionalParameters "--allow-reserved-package-id"
+    }
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            def outputFileName = "${project.name}-v${variant.versionName}-${variant.name}.apk"
+            it.outputFileName = outputFileName
+        }
     }
 }
 
@@ -85,4 +91,38 @@ dependencies {
     compileOnlyApi files("libs/mc_firebase_1.20.15.jar")
 
     implementation (project(':minecraftpe'))
+}
+
+def kotlinTaskName = "compileDebugKotlin"
+
+tasks.register('buildJavaModApi', Jar) {
+    destinationDirectory = file("${project.rootDir}/build/")
+    outputs.upToDateWhen { false } // 强制每次都执行
+
+    dependsOn kotlinTaskName
+
+    doFirst {
+        def variant = android.applicationVariants.first()
+        archiveFileName = "javaModApi-v${variant.versionName}.jar"
+
+        def kotlinDir = file("$buildDir/tmp/kotlin-classes/${variant.name}")
+        def javaDir = variant.javaCompileProvider.get().destinationDir
+
+        from kotlinDir.exists() ? [kotlinDir, javaDir] : javaDir
+
+        include 'dev1503/pocketlauncher/mod/**'
+        include 'dev1503/pocketlauncher/mod/events/**'
+        include 'dev1503/pocketlauncher/modloader/ModInfo.class'
+    }
+}
+
+tasks.configureEach { task ->
+    if (task.name.startsWith('assemble')) {
+        task.dependsOn buildJavaModApi
+    }
+}
+
+// 清理相关任务依赖
+clean.doLast {
+    delete "${project.rootDir}/build/javaModApi-*.jar"
 }

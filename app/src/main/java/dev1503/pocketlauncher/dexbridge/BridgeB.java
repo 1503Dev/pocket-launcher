@@ -11,10 +11,15 @@ import java.util.Arrays;
 import dev1503.pocketlauncher.InstanceInfo;
 import dev1503.pocketlauncher.Log;
 import dev1503.pocketlauncher.Utils;
+import dev1503.pocketlauncher.mod.events.AfterMinecraftActivityOnCreateListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetExternalStoragePathListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnCreateListener;
+import dev1503.pocketlauncher.modloader.ModEventListener;
 
 public class BridgeB {
     public static final String TAG = "BridgeB";
     public static final Utils utils = Utils.INSTANCE;
+    public static final ModEventListener.Companion modEventListener = ModEventListener.Companion;
 
     public static MinecraftActivity self;
     public static BridgeA bridgeA;
@@ -25,16 +30,29 @@ public class BridgeB {
     public static void onCreate(MinecraftActivity activity, Bundle bundle){
         Log.d(TAG, "onCreate(" + bundle + ")");
         self = activity;
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityOnCreateListener.NAME, self, bundle);
+        if (eventResult instanceof Boolean && ((Boolean) eventResult)) {
+            return;
+        }
         bridgeA = new BridgeA(self);
     }
     public static void afterOnCreate(MinecraftActivity self, Bundle bundle) {
         Log.d(TAG, "After:onCreate(" + bundle + ")");
+        Object eventResult = modEventListener.invoke(AfterMinecraftActivityOnCreateListener.NAME, self, bundle);
+        Log.d(TAG, "afterOnCreate(): " + eventResult);
+        if (eventResult instanceof Boolean && ((Boolean) eventResult)) {
+            return;
+        }
         String cacheLibsDir = utils.getADirIPath(self, "cache/launcher/native_libs");
         utils.fileRemove(cacheLibsDir);
         Log.d(TAG, "Removed " + cacheLibsDir);
     }
     public static String getExternalStoragePath(MinecraftActivity self, String ori) {
         String rez = bridgeA.getDataDirPath();
+        String eventResult = (String) modEventListener.invoke(OnMinecraftActivityGetExternalStoragePathListener.NAME, self, ori, rez);
+        if (eventResult != null) {
+            rez = eventResult;
+        }
         Log.d(TAG, "getExternalStoragePath(): " + ori + " -> " + rez);
         return rez;
     }

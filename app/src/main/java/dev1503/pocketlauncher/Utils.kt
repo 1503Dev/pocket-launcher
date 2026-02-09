@@ -655,6 +655,13 @@ object Utils {
     fun getModsInfoByPackagesAndVersions(context: Context, packageNames: List<String>, versions: List<String>): List<ModInfo> {
         return getAllMods(context).filter { it.packageName in packageNames && it.version in versions }
     }
+    fun verifyMethodCaller(targetCallerClass: Class<*>, targetCallerMethod: String): Boolean {
+        val caller = Thread.currentThread().getStackTrace()[4].toString().split("(")[0]
+        return (targetCallerClass.name + "." + targetCallerMethod) == caller
+    }
+    fun getMethodCaller(): String {
+        return Thread.currentThread().getStackTrace()[4].toString().split("(")[0]
+    }
 
     interface FilesSearchWithContentListener {
         fun onSearchComplete(files: List<File>, fileContents: List<String>)
