@@ -7,6 +7,8 @@ import dev1503.pocketlauncher.mod.events.AfterMinecraftActivityOnCreateListener
 import dev1503.pocketlauncher.mod.events.EventListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetExternalStoragePathListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnCreateListener
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnDestroyListener
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityStaticInitListener
 
 class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
     companion object {
@@ -21,19 +23,19 @@ class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
 
         fun invoke(eventName: String, vararg args: Any): Any? {
             val lowerEventName = eventName.lowercase()
-            val lastResult = eventResults[lowerEventName]
             var hasMatchingListener = false
 
             listeners.forEach { modListener ->
                 if (modListener.listener::class.java.interfaces[0].simpleName.lowercase() == lowerEventName + "listener") {
                     hasMatchingListener = true
+                    val lastResult = eventResults[lowerEventName]
                     when (lowerEventName) {
                         "afterminecraftactivityoncreate" -> {
                             eventResults[lowerEventName] =
                                 (modListener.listener as AfterMinecraftActivityOnCreateListener).onCreate(
                                     args[0] as MinecraftActivity,
                                     args[1] as Bundle?,
-                                    lastResult as? Boolean ?: true
+                                    (lastResult as? Boolean) == true
                                 )
                         }
                         "onminecraftactivitygetexternalstoragepath" -> {
@@ -42,7 +44,7 @@ class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
                                     args[0] as MinecraftActivity,
                                     args[1] as String,
                                     args[2] as String,
-                                    lastResult as String?
+                                    lastResult as? String
                                 )
                         }
                         "onminecraftactivityoncreate" -> {
@@ -50,13 +52,24 @@ class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
                                 (modListener.listener as OnMinecraftActivityOnCreateListener).onCreate(
                                     args[0] as MinecraftActivity,
                                     args[1] as Bundle?,
-                                    lastResult as? Boolean ?: true
+                                    (lastResult as? Boolean) == true
+                                )
+                        }
+                        "onminecraftactivitystaticinit" -> (modListener.listener as OnMinecraftActivityStaticInitListener)._client()
+                        "onminecraftactivityondestroy" -> {
+                            eventResults[lowerEventName] =
+                                (modListener.listener as OnMinecraftActivityOnDestroyListener).onDestroy(
+                                    args[0] as MinecraftActivity,
+                                    (lastResult as? Boolean) == true
                                 )
                         }
                     }
                 }
             }
-            return if (hasMatchingListener) eventResults[lowerEventName] else null
+            if (hasMatchingListener || (eventResults.containsKey(lowerEventName) && eventResults[lowerEventName] != null)) {
+                return eventResults[lowerEventName]
+            }
+            return null
         }
     }
 }

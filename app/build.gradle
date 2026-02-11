@@ -113,6 +113,10 @@ tasks.register('buildJavaModApi', Jar) {
         include 'dev1503/pocketlauncher/mod/**'
         include 'dev1503/pocketlauncher/mod/events/**'
         include 'dev1503/pocketlauncher/modloader/ModInfo.class'
+        include 'dev1503/pocketlauncher/Log.class'
+        include 'dev1503/pocketlauncher/KVConfig.class'
+        include 'dev1503/pocketlauncher/Utils.class'
+        include 'dev1503/pocketlauncher/InstanceInfo.class'
     }
 }
 

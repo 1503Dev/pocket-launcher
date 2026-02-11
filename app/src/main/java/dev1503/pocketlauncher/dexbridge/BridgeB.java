@@ -13,7 +13,11 @@ import dev1503.pocketlauncher.Log;
 import dev1503.pocketlauncher.Utils;
 import dev1503.pocketlauncher.mod.events.AfterMinecraftActivityOnCreateListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetExternalStoragePathListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetInternalStoragePathListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetLegacyExternalStoragePathListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnCreateListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnDestroyListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityStaticInitListener;
 import dev1503.pocketlauncher.modloader.ModEventListener;
 
 public class BridgeB {
@@ -26,6 +30,7 @@ public class BridgeB {
 
     public static void _client() {
         Log.d(TAG, "<client>()");
+        modEventListener.invoke(OnMinecraftActivityStaticInitListener.NAME);
     }
     public static void onCreate(MinecraftActivity activity, Bundle bundle){
         Log.d(TAG, "onCreate(" + bundle + ")");
@@ -39,7 +44,6 @@ public class BridgeB {
     public static void afterOnCreate(MinecraftActivity self, Bundle bundle) {
         Log.d(TAG, "After:onCreate(" + bundle + ")");
         Object eventResult = modEventListener.invoke(AfterMinecraftActivityOnCreateListener.NAME, self, bundle);
-        Log.d(TAG, "afterOnCreate(): " + eventResult);
         if (eventResult instanceof Boolean && ((Boolean) eventResult)) {
             return;
         }
@@ -49,20 +53,28 @@ public class BridgeB {
     }
     public static String getExternalStoragePath(MinecraftActivity self, String ori) {
         String rez = bridgeA.getDataDirPath();
-        String eventResult = (String) modEventListener.invoke(OnMinecraftActivityGetExternalStoragePathListener.NAME, self, ori, rez);
-        if (eventResult != null) {
-            rez = eventResult;
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetExternalStoragePathListener.NAME, self, ori, rez);
+        if (eventResult instanceof String) {
+            rez = (String) eventResult;
         }
         Log.d(TAG, "getExternalStoragePath(): " + ori + " -> " + rez);
         return rez;
     }
     public static String getInternalStoragePath(MinecraftActivity self, String ori) {
         String rez = bridgeA.getDataDirPath();
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetInternalStoragePathListener.NAME, self, ori, rez);
+        if (eventResult instanceof String) {
+            rez = (String) eventResult;
+        }
         Log.d(TAG, "getInternalStoragePath(): " + ori + " -> " + rez);
         return rez;
     }
     public static void onDestroy(MinecraftActivity self) {
         Log.d(TAG, "onDestroy()");
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityOnDestroyListener.NAME, self);
+        if (eventResult instanceof Boolean && ((Boolean) eventResult)) {
+            return;
+        }
         System.exit(0);
     }
     public static void afterOnDestroy(MinecraftActivity self) {
@@ -70,10 +82,15 @@ public class BridgeB {
     }
     public static String getLegacyExternalStoragePath(MinecraftActivity self, String path, String ori) {
         Log.d(TAG, "getLegacyExternalStoragePath(" + path + "): " + ori);
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetLegacyExternalStoragePathListener.NAME, self, path, ori);
+        if (eventResult instanceof String) {
+            ori = (String) eventResult;
+        }
         return ori;
     }
     public static String getLegacyDeviceID(MinecraftActivity self, String ori) {
         Log.d(TAG, "getLegacyDeviceID(): " + ori);
+//        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetLegacyDeviceIDListener.NAME, self, ori);
         return ori;
     }
     public static String getDeviceModel(MinecraftActivity self, String ori) {

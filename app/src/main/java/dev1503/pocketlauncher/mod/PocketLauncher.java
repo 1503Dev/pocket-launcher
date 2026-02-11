@@ -2,6 +2,7 @@ package dev1503.pocketlauncher.mod;
 
 import java.util.Objects;
 
+import dev1503.pocketlauncher.InstanceInfo;
 import dev1503.pocketlauncher.Log;
 import dev1503.pocketlauncher.Utils;
 import dev1503.pocketlauncher.mod.events.EventListener;
@@ -12,15 +13,17 @@ import dev1503.pocketlauncher.modloader.ModLoader;
 public class PocketLauncher {
     public static final String TAG = "PocketLauncher";
 
+    private InstanceInfo instanceInfo;
     private ModInfo modInfo;
     private int loadingIndex;
 
-    public PocketLauncher(ModInfo modInfo, int loadingIndex) {
+    public PocketLauncher(InstanceInfo instanceInfo, ModInfo modInfo, int loadingIndex) {
         if (!Utils.INSTANCE.verifyMethodCaller(ModLoader.class, "invokeEntryMethod")) {
             Log.e(TAG, "Illegal instance creation by " + Utils.INSTANCE.getMethodCaller());
             throw new RuntimeException("Illegal instance creation");
         }
 
+        this.instanceInfo = instanceInfo;
         this.modInfo = modInfo;
         this.loadingIndex = loadingIndex;
 
@@ -32,6 +35,9 @@ public class PocketLauncher {
     }
     public int getLoadingIndex() {
         return loadingIndex;
+    }
+    public InstanceInfo getInstanceInfo() {
+        return instanceInfo;
     }
 
     public boolean listen(EventListener listener) {

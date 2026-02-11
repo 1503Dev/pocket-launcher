@@ -118,50 +118,8 @@ class ModLoader(val activity: Activity, val classLoader: ClassLoader) {
                         )
                         addDexPath.invoke(pathList, mod.entryFilePath, null)
 
-                        invokeEntryMethod(mod, finishCallback)
-                    }
-                    "jar" -> {
-                        val jarClassLoader = PathClassLoader(
-                            mod.entryFilePath,
-                            File(activity.cacheDir, "dex").apply { mkdirs() }.absolutePath,
-                            classLoader
-                        )
-
-                        val originalParent = jarClassLoader.parent
-                        val newParent = classLoader
-                        val parentField = ClassLoader::class.java.getDeclaredField("parent")
-                        parentField.isAccessible = true
-                        parentField.set(jarClassLoader, newParent)
-
-                        val entryClass = mod.entryMethod.split("#")[0]
-                        val entryMethod = mod.entryMethod.split("#")[1]
-
-                        val entryClassObj = try {
-                            jarClassLoader.loadClass(entryClass)
-                        } catch (e: ClassNotFoundException) {
-                            Log.w(TAG, "Mod ${mod.name} entry class not found: $entryClass")
-                            finishCallback(true, "")
-                            return
-                        }
-
-                        val entryMethodObj = try {
-                            entryClassObj.getDeclaredMethod(
-                                entryMethod,
-                                Activity::class.java,
-                                ModInfo::class.java,
-                                PocketLauncher::class.java
-                            )
-                        } catch (e: NoSuchMethodException) {
-                            Log.w(TAG, "Mod ${mod.name} entry method not found: $entryMethod")
-                            finishCallback(true, "")
-                            return
-                        }
-
-                        val pl = PocketLauncher(mod, modIndex)
-                        entryMethodObj.invoke(null, activity, mod, pl)
-                        finishCallback(true, "Mod loaded successfully: ${mod.name}")
-                    }
-                    else -> {
+                        invokeEntryMethod(instanceInfo, mod, finishCallback)
+                    } else -> {
                         finishCallback(false, "Unsupported entry suffix: ${mod.entrySuffix}")
                     }
                 }
@@ -175,7 +133,11 @@ class ModLoader(val activity: Activity, val classLoader: ClassLoader) {
         }
     }
 
-    private fun invokeEntryMethod(mod: ModInfo, finishCallback: (Boolean, String) -> Unit) {
+    private fun invokeEntryMethod(
+        instanceInfo: InstanceInfo,
+        mod: ModInfo,
+        finishCallback: (Boolean, String) -> Unit
+    ) {
         val entryClass = mod.entryMethod.split("#")[0]
         val entryMethod = mod.entryMethod.split("#")[1]
         var entryClassObj: Class<*>? = null
@@ -199,7 +161,7 @@ class ModLoader(val activity: Activity, val classLoader: ClassLoader) {
             return
         }
 
-        val pl = PocketLauncher(mod, modIndex)
+        val pl = PocketLauncher(instanceInfo, mod, modIndex)
         entryMethodObj.invoke(null, activity, pl)
         finishCallback(true, "Mod loaded successfully: ${mod.name}")
     }
