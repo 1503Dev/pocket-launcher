@@ -29,9 +29,9 @@ jobs:
       run: |
         echo "BUILD_IN_CI=true" >> local.properties
         echo "SIGNING_KEY_PATH_OVERRIDE=$HOME/.android/debug.keystore" >> local.properties
-        echo "SIGNING_KEY_PASSWORD=android" >> local.properties
-        echo "SIGNING_KEY_ALIAS_PASSWORD=android" >> local.properties
-        echo "SIGNING_KEY_ALIAS=androiddebugkey" >> local.properties
+        echo "SIGNING_KEY_PASSWORD=1503Dev" >> local.properties
+        echo "SIGNING_KEY_ALIAS_PASSWORD=1503Dev" >> local.properties
+        echo "SIGNING_KEY_ALIAS=1503Dev" >> local.properties
 
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
