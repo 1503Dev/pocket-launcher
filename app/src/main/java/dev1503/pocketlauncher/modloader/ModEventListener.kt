@@ -6,8 +6,10 @@ import dev1503.pocketlauncher.dexbridge.MinecraftActivity
 import dev1503.pocketlauncher.mod.events.AfterMinecraftActivityOnCreateListener
 import dev1503.pocketlauncher.mod.events.EventListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetExternalStoragePathListener
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityHasWriteExternalStoragePermissionListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnCreateListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnDestroyListener
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityRequestStoragePermissionListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityStaticInitListener
 
 class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
@@ -60,6 +62,24 @@ class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
                             eventResults[lowerEventName] =
                                 (modListener.listener as OnMinecraftActivityOnDestroyListener).onDestroy(
                                     args[0] as MinecraftActivity,
+                                    (lastResult as? Boolean) == true
+                                )
+                        }
+                        "onminecraftactivityhaswriteexternalstoragepermission" -> {
+                            eventResults[lowerEventName] =
+                                (modListener.listener as OnMinecraftActivityHasWriteExternalStoragePermissionListener).hasWriteExternalStoragePermission(
+                                    args[0] as MinecraftActivity,
+                                    args[1] as Boolean,
+                                    args[2] as Boolean,
+                                    (lastResult as? Boolean) == true
+                                )
+                        }
+                        "onminecraftactivityrequeststoragepermission" -> {
+                            eventResults[lowerEventName] =
+                                (modListener.listener as OnMinecraftActivityRequestStoragePermissionListener).requestStoragePermission(
+                                    args[0] as MinecraftActivity,
+                                    args[1] as Int,
+                                    args[2] as Boolean,
                                     (lastResult as? Boolean) == true
                                 )
                         }

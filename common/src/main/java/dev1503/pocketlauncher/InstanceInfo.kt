@@ -78,7 +78,7 @@ open class InstanceInfo(
             return Utils.getModsInfoByPackagesAndVersions(context!!, pkg, v)
         }
     var deviceModel: String
-        get() = config.getString("device_model", "")
+        get() = config.getString("device_model", Utils.getDeviceModelName())
         set(value) {
             config.set("device_model", value)
         }

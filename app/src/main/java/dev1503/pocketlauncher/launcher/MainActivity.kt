@@ -185,7 +185,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
     override fun onWindowFocusChanged(hasFocus: Boolean) {
-        Log.d(TAG, "onWindowFocusChanged: $hasFocus")
+//        Log.d(TAG, "onWindowFocusChanged: $hasFocus")
         if (hasFocus) {
             hideSystemBars()
         } else if (GlobalDebugWindow.instance != null) {

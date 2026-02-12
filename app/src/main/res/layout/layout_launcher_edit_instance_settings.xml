@@ -14,19 +14,21 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:strokeWidth="0dp"
-            app:cardElevation="2dp"
+            app:cardElevation="4dp"
             app:cardCornerRadius="8dp"
             app:cardBackgroundColor="@color/card_background">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingTop="12dp">
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/launcher"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                    android:padding="16dp"/>
+                    android:paddingStart="16dp"
+                    android:paddingBottom="4dp"/>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -41,7 +43,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:text="@string/instance_icon"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:layout_weight="1"
                         android:textColor="?attr/colorOnPrimary" />
                     <ImageView
@@ -75,7 +77,7 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:text="@string/working_directory"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:layout_weight="1"
                         android:textColor="?attr/colorOnPrimary" />
                     <ImageView
@@ -95,24 +97,27 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:paddingLeft="16dp"
-                    android:paddingTop="12dp"
                     android:paddingRight="16dp"
-                    android:paddingBottom="12dp"
+                    android:gravity="center_vertical"
                     android:tag="device_model"
                     android:background="?android:attr/selectableItemBackground">
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:text="@string/device_model"
-                        android:textSize="16sp"
+                        android:textSize="14sp"
                         android:layout_weight="1"
+                        android:layout_marginTop="12dp"
+                        android:layout_marginBottom="12dp"
                         android:textColor="?attr/colorOnPrimary" />
-                    <ImageView
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/arrow_forward_24px"
-                        android:scaleType="fitEnd"
-                        app:tint="?attr/colorOnPrimary" />
+                    <androidx.appcompat.widget.AppCompatEditText
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:singleLine="true"
+                        android:maxLines="1"
+                        android:tag="input"
+                        android:textSize="14sp"
+                        android:layout_weight="1"/>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -121,19 +126,21 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             app:strokeWidth="0dp"
-            app:cardElevation="2dp"
+            app:cardElevation="4dp"
             app:cardCornerRadius="8dp"
             app:cardBackgroundColor="@color/card_background">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical">
+                android:orientation="vertical"
+                android:paddingTop="12dp">
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/game"
                     android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                    android:padding="16dp"/>
+                    android:paddingStart="16dp"
+                    android:paddingBottom="4dp"/>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

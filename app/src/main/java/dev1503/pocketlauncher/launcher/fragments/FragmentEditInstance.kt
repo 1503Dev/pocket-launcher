@@ -1,11 +1,15 @@
 package dev1503.pocketlauncher.launcher.fragments
 
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.AppCompatEditText
+import androidx.appcompat.widget.PopupMenu
 import androidx.cardview.widget.CardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -83,30 +87,32 @@ class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceI
             }
         }
         fun initDeviceModel() {
-            l.findViewWithTag<ViewGroup>("device_model").apply {
-                setOnClickListener { _ ->
-                    val inputLayout = TextInputLayout(self)
-                    val inputField = TextInputEditText(self)
-                    inputLayout.addView(inputField)
-                    MaterialAlertDialogBuilder(self)
-                        .setTitle(R.string.working_directory)
-                        .setView(inputLayout)
-                        .setPositiveButton(R.string.ok) { _, _ ->
-                            instanceInfo.deviceModel = inputField.text.toString()
-                        }
-                        .setNegativeButton(R.string.cancel) { d, _ ->
-                            d.cancel()
-                        }
-                        .setNeutralButton(R.string.reset) { d, _ ->
-                            inputField.text = Utils.getDeviceModelName()
-                        }
-                        .show()
+            val deviceModelLayout = l.findViewWithTag<ViewGroup>("device_model")
+            val input = deviceModelLayout.findViewWithTag<AppCompatEditText>("input").apply {
+                setText(instanceInfo.deviceModel)
+                addTextChangedListener(object : TextWatcher {
+                    override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                    override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+                    override fun afterTextChanged(s: Editable?) {
+                        instanceInfo.deviceModel = s.toString()
+                    }
+                })
+            }
+            deviceModelLayout.setOnClickListener { v ->
+                PopupMenu(self, v).apply {
+                    menu.add(0, 0, 0, R.string.reset)
+                    show()
+                }.setOnMenuItemClickListener { _ ->
+                    input.setText(Utils.getDeviceModelName())
+                    instanceInfo.deviceModel = Utils.getDeviceModelName()
+                    true
                 }
             }
         }
 
         initInstanceIcon()
         initWorkingDirectory()
+        initDeviceModel()
 
         return l
     }

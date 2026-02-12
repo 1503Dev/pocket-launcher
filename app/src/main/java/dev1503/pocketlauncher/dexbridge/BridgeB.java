@@ -17,8 +17,10 @@ import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetExternalStoragePa
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetInternalStoragePathListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetLegacyDeviceIDListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetLegacyExternalStoragePathListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityHasWriteExternalStoragePermissionListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnCreateListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnDestroyListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityRequestStoragePermissionListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityStaticInitListener;
 import dev1503.pocketlauncher.modloader.ModEventListener;
 
@@ -99,12 +101,13 @@ public class BridgeB {
         return ori;
     }
     public static String getDeviceModel(MinecraftActivity self, String ori) {
-        Log.d(TAG, "getDeviceModel(): " + ori);
-        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetDeviceModelListener.NAME, self, ori);
+        String rez = bridgeA.getDeviceModel();
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetDeviceModelListener.NAME, self, ori, rez);
         if (eventResult instanceof String) {
-            ori = (String) eventResult;
+            rez = (String) eventResult;
         }
-        return ori;
+        Log.d(TAG, "getDeviceModel(): " + ori + " -> " + rez);
+        return rez;
     }
     public static int getAndroidVersion(MinecraftActivity self, int ori) {
         Log.d(TAG, "getAndroidVersion(): " + ori);
@@ -127,8 +130,13 @@ public class BridgeB {
         return ori;
     }
     public static boolean requestStoragePermission(MinecraftActivity self, int paramInt) {
-        Log.d(TAG, "requestStoragePermission(" + paramInt + "): ");
-        return true;
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityRequestStoragePermissionListener.NAME, self, paramInt, true);
+        boolean rez = true;
+        if (eventResult instanceof Boolean) {
+            rez = (Boolean) eventResult;
+        }
+        Log.d(TAG, "requestStoragePermission(" + paramInt + "): Prevented[" + rez + "]");
+        return rez;
     }
     public static boolean requestPushPermission(MinecraftActivity self) {
         Log.d(TAG, "requestPushPermission()");
@@ -140,6 +148,10 @@ public class BridgeB {
     }
     public static boolean hasWriteExternalStoragePermission(MinecraftActivity self, boolean ori) {
         boolean rez = false;
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityHasWriteExternalStoragePermissionListener.NAME, self, ori, rez);
+        if (eventResult instanceof Boolean) {
+            rez = (Boolean) eventResult;
+        }
         Log.d(TAG, "hasWriteExternalStoragePermission(): " + ori + " -> " + rez);
         return rez;
     }

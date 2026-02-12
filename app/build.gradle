@@ -91,6 +91,7 @@ dependencies {
     compileOnlyApi files("libs/mc_firebase_1.20.15.jar")
 
     implementation (project(':minecraftpe'))
+    implementation project(':common')
 }
 
 def kotlinTaskName = "compileDebugKotlin"

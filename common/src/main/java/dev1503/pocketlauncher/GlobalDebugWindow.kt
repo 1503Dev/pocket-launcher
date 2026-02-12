@@ -20,6 +20,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
 import androidx.core.view.isVisible
+import dev1503.pocketlauncher.common.R
 import kotlin.math.abs
 
 @SuppressLint("ClickableViewAccessibility")

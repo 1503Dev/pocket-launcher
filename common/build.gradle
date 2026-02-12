@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.mojang.minecraftpe'
+    namespace 'dev1503.pocketlauncher.common'
     compileSdk 36
 
     defaultConfig {
-        minSdk 23
+        minSdk 26
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -32,17 +32,17 @@ android {
 dependencies {
     implementation libs.appcompat
     implementation libs.material
-    implementation libs.activity
-    implementation libs.constraintlayout
     implementation libs.core.ktx
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 
-    compileOnlyApi files("../app/libs/mc_fmod.jar")
-    compileOnlyApi files("../app/libs/mc_minecraftpe_1.20.15.jar")
+    implementation 'com.google.code.gson:gson:2.13.2'
+    implementation 'io.reactivex.rxjava3:rxjava:3.1.6'
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
+    implementation("com.squareup.okio:okio:3.16.2")
+
     compileOnlyApi files("../app/libs/bridge.jar")
     compileOnlyApi files("../app/libs/mc_firebase_1.20.15.jar")
-
-    api project(":common")
+    compileOnlyApi files("../app/libs/mc_minecraftpe_1.20.15.jar")
 }

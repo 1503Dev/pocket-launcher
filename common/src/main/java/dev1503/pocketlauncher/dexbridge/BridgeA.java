@@ -8,7 +8,7 @@ import dev1503.pocketlauncher.Utils;
 public class BridgeA {
     private final String TAG = "BridgeA";
 
-    private InstanceInfo instanceInfo;
+    private final InstanceInfo instanceInfo;
 
     private final KVConfig kvGlobalGameConfig;
     private final KVConfig kvLauncherSettings;
@@ -35,5 +35,8 @@ public class BridgeA {
     }
     public String getDataDirPath() {
         return instanceInfo.getDataStorageDirParsed();
+    }
+    public String getDeviceModel() {
+        return instanceInfo.getDeviceModel();
     }
 }

@@ -25,6 +25,7 @@ import dev1503.pocketlauncher.InstanceInfo
 import dev1503.pocketlauncher.KVConfig
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
+//import dev1503.pocketlauncher.common.R as CR
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.Utils.kvGlobalGameConfig
 import dev1503.pocketlauncher.Utils.kvLauncherSettings
