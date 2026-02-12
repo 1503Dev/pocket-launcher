@@ -47,7 +47,6 @@
     <string name="isolated_game_storage">独立游戏存储</string>
     <string name="working_directory_set_to">工作目录设置为 %s</string>
     <string name="failed_to_load_mods">加载模组失败</string>
-    <string name="mod_not_supported_version">模组 %s 不支持当前实例版本</string>
     <string name="invalid_mod_package_name">无效的模组包名</string>
     <string name="failed_to_change_mod_status">更改模组状态失败</string>
     <string name="invalid_mod_version">无效的模组版本名称</string>

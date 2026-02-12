@@ -4,7 +4,7 @@ import android.app.Activity
 import dalvik.system.PathClassLoader
 import dev1503.pocketlauncher.InstanceInfo
 import dev1503.pocketlauncher.Log
-import dev1503.pocketlauncher.R
+import dev1503.pocketlauncher.common.R
 import dev1503.pocketlauncher.mod.PocketLauncher
 import java.io.File
 import java.lang.reflect.Field

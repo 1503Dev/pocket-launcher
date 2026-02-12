@@ -47,7 +47,6 @@
     <string name="isolated_game_storage">Изолированное хранилище игры</string>
     <string name="working_directory_set_to">Рабочий каталог установлен в %s</string>
     <string name="failed_to_load_mods">Не удалось загрузить моды</string>
-    <string name="mod_not_supported_version">Мод %s не поддерживает версию Minecraft</string>
     <string name="invalid_mod_package_name">Недействительное имя пакета мода</string>
     <string name="failed_to_change_mod_status">Не удалось изменить статус мода</string>
     <string name="invalid_mod_version">Недействительное имя версии мода</string>

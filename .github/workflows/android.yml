@@ -23,10 +23,11 @@ jobs:
     - name: Set up Android debug keystore
       run: |
         mkdir -p $HOME/.android
-        keytool -genkey -v -keystore $HOME/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+        keytool -genkey -v -keystore $HOME/.android/debug.keystore -storepass 1503Dev -alias 1503Dev -keypass 1503Dev -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=1503Dev Debug,O=1503Dev"
 
     - name: Create local.properties
       run: |
+        echo "BUILD_IN_CI=true" >> local.properties
         echo "SIGNING_KEY_PATH_OVERRIDE=$HOME/.android/debug.keystore" >> local.properties
         echo "SIGNING_KEY_PASSWORD=android" >> local.properties
         echo "SIGNING_KEY_ALIAS_PASSWORD=android" >> local.properties
@@ -44,8 +45,8 @@ jobs:
         name: apk-debug
         path: app/build/outputs/apk/debug/*.apk
 
-    - name: Upload Mod API JAR
+    - name: Upload Java Mod API JAR
       uses: actions/upload-artifact@v4
       with:
         name: modapi-jar
-        path: app/build/javaModApi-*.jar
+        path: build/javaModApi-*.jar

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mod_not_supported_version">模组 %s 不支持当前实例版本</string>
+</resources>

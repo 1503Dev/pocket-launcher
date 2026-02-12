@@ -1,6 +1,7 @@
 package dev1503.pocketlauncher.modloader
 
 import android.os.Bundle
+import com.mojang.minecraftpe.NetworkMonitor
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.dexbridge.MinecraftActivity
 import dev1503.pocketlauncher.mod.events.AfterMinecraftActivityOnCreateListener
@@ -11,6 +12,8 @@ import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnCreateListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnDestroyListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityRequestStoragePermissionListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityStaticInitListener
+import dev1503.pocketlauncher.mod.events.OnNetworkMonitorNativeUpdateNetworkStatusListener
+import dev1503.pocketlauncher.mod.events.types.NetworkMonitorNativeUpdateNetworkStatusParams
 
 class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
     companion object {
@@ -81,6 +84,14 @@ class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
                                     args[1] as Int,
                                     args[2] as Boolean,
                                     (lastResult as? Boolean) == true
+                                )
+                        }
+                        "onnetworkmonitornativeupdatenetworkstatus" -> {
+                            eventResults[lowerEventName] =
+                                (modListener.listener as OnNetworkMonitorNativeUpdateNetworkStatusListener).nativeUpdateNetworkStatus(
+                                    args[0] as NetworkMonitor,
+                                    args[1] as NetworkMonitorNativeUpdateNetworkStatusParams,
+                                    (lastResult as NetworkMonitorNativeUpdateNetworkStatusParams?)
                                 )
                         }
                     }
