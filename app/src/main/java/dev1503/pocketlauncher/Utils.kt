@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.TypedValue
@@ -661,6 +662,16 @@ object Utils {
     }
     fun getMethodCaller(): String {
         return Thread.currentThread().getStackTrace()[4].toString().split("(")[0]
+    }
+    fun getDeviceModelName(): String {
+        val manufacturer = Build.MANUFACTURER
+        val model = Build.MODEL
+
+        return if (model.startsWith(manufacturer)) {
+            model.uppercase(Locale.ENGLISH)
+        } else {
+            "${manufacturer.uppercase(Locale.ENGLISH)} $model"
+        }
     }
 
     interface FilesSearchWithContentListener {

@@ -12,8 +12,10 @@ import dev1503.pocketlauncher.InstanceInfo;
 import dev1503.pocketlauncher.Log;
 import dev1503.pocketlauncher.Utils;
 import dev1503.pocketlauncher.mod.events.AfterMinecraftActivityOnCreateListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetDeviceModelListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetExternalStoragePathListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetInternalStoragePathListener;
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetLegacyDeviceIDListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetLegacyExternalStoragePathListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnCreateListener;
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnDestroyListener;
@@ -90,11 +92,18 @@ public class BridgeB {
     }
     public static String getLegacyDeviceID(MinecraftActivity self, String ori) {
         Log.d(TAG, "getLegacyDeviceID(): " + ori);
-//        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetLegacyDeviceIDListener.NAME, self, ori);
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetLegacyDeviceIDListener.NAME, self, ori);
+        if (eventResult instanceof String) {
+            ori = (String) eventResult;
+        }
         return ori;
     }
     public static String getDeviceModel(MinecraftActivity self, String ori) {
         Log.d(TAG, "getDeviceModel(): " + ori);
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetDeviceModelListener.NAME, self, ori);
+        if (eventResult instanceof String) {
+            ori = (String) eventResult;
+        }
         return ori;
     }
     public static int getAndroidVersion(MinecraftActivity self, int ori) {

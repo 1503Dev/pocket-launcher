@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.cardview.widget.CardView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import dev1503.pocketlauncher.InstanceInfo
 import dev1503.pocketlauncher.KVConfig
 import dev1503.pocketlauncher.Log
@@ -75,6 +77,28 @@ class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceI
                                 }
                             }
                             Snackbar.make(layout, self.getString(R.string.working_directory_set_to, instanceInfo.dataStorageDirParsed), Snackbar.LENGTH_SHORT).show()
+                        }
+                        .show()
+                }
+            }
+        }
+        fun initDeviceModel() {
+            l.findViewWithTag<ViewGroup>("device_model").apply {
+                setOnClickListener { _ ->
+                    val inputLayout = TextInputLayout(self)
+                    val inputField = TextInputEditText(self)
+                    inputLayout.addView(inputField)
+                    MaterialAlertDialogBuilder(self)
+                        .setTitle(R.string.working_directory)
+                        .setView(inputLayout)
+                        .setPositiveButton(R.string.ok) { _, _ ->
+                            instanceInfo.deviceModel = inputField.text.toString()
+                        }
+                        .setNegativeButton(R.string.cancel) { d, _ ->
+                            d.cancel()
+                        }
+                        .setNeutralButton(R.string.reset) { d, _ ->
+                            inputField.text = Utils.getDeviceModelName()
                         }
                         .show()
                 }

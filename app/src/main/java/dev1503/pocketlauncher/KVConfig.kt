@@ -261,6 +261,11 @@ class KVConfig(
     private fun saveToFile() {
         if (isReleased) return
         try {
+            file.parentFile?.exists()?.let {
+                if (!it) {
+                    file.parentFile?.mkdirs()
+                }
+            }
             val tempFile = File(file.parent, "${file.name}.tmp")
 
             tempFile.bufferedWriter().use { writer ->

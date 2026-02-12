@@ -77,4 +77,9 @@ open class InstanceInfo(
             val v = ids.map { it.split(":")[1] }
             return Utils.getModsInfoByPackagesAndVersions(context!!, pkg, v)
         }
+    var deviceModel: String
+        get() = config.getString("device_model", "")
+        set(value) {
+            config.set("device_model", value)
+        }
 }

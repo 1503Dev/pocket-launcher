@@ -17,11 +17,16 @@
             app:cardElevation="2dp"
             app:cardCornerRadius="8dp"
             app:cardBackgroundColor="@color/card_background">
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/launcher"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    android:padding="16dp"/>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -51,6 +56,11 @@
                         android:scaleType="fitEnd"
                         app:tint="?attr/colorOnPrimary" />
                 </LinearLayout>
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorOnPrimary"
+                    android:alpha="0.2"/>
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -75,8 +85,57 @@
                         android:scaleType="fitEnd"
                         app:tint="?attr/colorOnPrimary" />
                 </LinearLayout>
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="?attr/colorOnPrimary"
+                    android:alpha="0.2"/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingLeft="16dp"
+                    android:paddingTop="12dp"
+                    android:paddingRight="16dp"
+                    android:paddingBottom="12dp"
+                    android:tag="device_model"
+                    android:background="?android:attr/selectableItemBackground">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="@string/device_model"
+                        android:textSize="16sp"
+                        android:layout_weight="1"
+                        android:textColor="?attr/colorOnPrimary" />
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:src="@drawable/arrow_forward_24px"
+                        android:scaleType="fitEnd"
+                        app:tint="?attr/colorOnPrimary" />
+                </LinearLayout>
             </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:strokeWidth="0dp"
+            app:cardElevation="2dp"
+            app:cardCornerRadius="8dp"
+            app:cardBackgroundColor="@color/card_background">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/game"
+                    android:textAppearance="@style/TextAppearance.AppCompat.Large"
+                    android:padding="16dp"/>
 
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 </ScrollView>
