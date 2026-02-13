@@ -1,5 +1,8 @@
 package dev1503.pocketlauncher.mod;
 
+import com.mojang.minecraftpe.NetworkMonitor;
+
+import java.lang.reflect.Field;
 import java.util.Objects;
 
 import dev1503.pocketlauncher.InstanceInfo;
@@ -38,6 +41,15 @@ public class PocketLauncher {
     }
     public InstanceInfo getInstanceInfo() {
         return instanceInfo;
+    }
+    public NetworkMonitor getNetworkMonitor() {
+        try {
+            Field field = NetworkMonitor.class.getDeclaredField("INSTANCE");
+            field.setAccessible(true);
+            return (NetworkMonitor) field.get(null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public boolean listen(EventListener listener) {

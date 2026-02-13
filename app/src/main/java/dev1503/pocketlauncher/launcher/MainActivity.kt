@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
                 .show()
         }
 
-        Utils.kvGlobalGameConfig = KVConfig(self, Utils.getDataDirPath(self) + "global_game_config.json")
+        Utils.kvGlobalGameConfig = KVConfig(self, Utils.getGlobalGameStorageDirPath(self) + "config.json")
         Utils.kvLauncherSettings = KVConfig(self, Utils.getDataDirPath(self) + "launcher_settings.json")
         layoutContainer = findViewWithTag("container") as ViewGroup
         initLayouts()

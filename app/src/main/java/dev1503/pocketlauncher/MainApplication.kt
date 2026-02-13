@@ -16,18 +16,19 @@ class MainApplication: Application() {
     val TAG = "MainApplication"
 
     override fun onCreate() {
+        Utils.application = this
         super.onCreate()
         Log.i(TAG, "onCreate")
-        val globalDebugWindow = GlobalDebugWindow(this)
+        val globalDebugWindow = if (GlobalDebugWindow.ENABLED) GlobalDebugWindow(this) else null
         registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
             override fun onActivityCreated(p0: Activity, p1: Bundle?) {
                 Log.d(TAG, "onActivityCreated($p0, $p1)")
-                globalDebugWindow.updateActivity(p0)
+                globalDebugWindow?.updateActivity(p0)
             }
 
             override fun onActivityDestroyed(p0: Activity) {
                 Log.d(TAG, "onActivityDestroyed($p0)")
-                globalDebugWindow.onActivityDestroyed(p0)
+                globalDebugWindow?.onActivityDestroyed(p0)
             }
 
             override fun onActivityPaused(p0: Activity) {

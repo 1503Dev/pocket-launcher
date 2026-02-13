@@ -13,6 +13,35 @@
         <activity
             android:name="com.microsoft.xal.browser.WebKitWebViewController"
             tools:ignore="MissingClass" />
+        <activity
+            android:name="com.microsoft.xal.browser.IntentHandler"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="screenSize|orientation|keyboardHidden"
+            android:alwaysRetainTaskState="true"
+            tools:ignore="MissingClass">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <data
+                    android:scheme="@string/xal_token"
+                    android:host="auth"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+            </intent-filter>
+        </activity>
+        <service
+            android:name="com.mojang.minecraftpe.NotificationListenerService"
+            android:exported="false"
+            tools:ignore="Instantiatable">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+        <service
+            android:name="com.mojang.minecraftpe.ImportService"
+            android:exported="true"/>
+
+
     </application>
 
 </manifest>

@@ -60,6 +60,7 @@ public final class Log {
     private static final Map<String, Integer> tagColorCache = new HashMap<>();
 
     public static void write(int type, @Nullable String tag, @Nullable String msg, @Nullable Throwable tr) {
+        if (!GlobalDebugWindow.Companion.getENABLED()) return;
         String time = time();
         String typeStr = getTypeString(type);
         String firstLinePrefix = time + " " + typeStr + " [" + tag + "] ";

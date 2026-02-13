@@ -18,7 +18,7 @@ public class BridgeA {
 
     public BridgeA(MinecraftActivity self) {
         this.self = self;
-        this.kvGlobalGameConfig = new KVConfig(self, utils.getDataDirPath(self) + "global_game_config.json");
+        this.kvGlobalGameConfig = new KVConfig(self, utils.getGlobalGameStorageDirPath(self) + "config.json");
         this.kvLauncherSettings = new KVConfig(self, utils.getDataDirPath(self) + "launcher_settings.json");
 
         utils.setKvLauncherSettings(kvLauncherSettings);

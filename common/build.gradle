@@ -42,7 +42,5 @@ dependencies {
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
     implementation("com.squareup.okio:okio:3.16.2")
 
-    compileOnlyApi files("../app/libs/bridge.jar")
-    compileOnlyApi files("../app/libs/mc_firebase_1.20.15.jar")
-    compileOnlyApi files("../app/libs/mc_minecraftpe_1.20.15.jar")
+    compileOnlyApi fileTree(dir: '../api', include: ['*.jar'])
 }

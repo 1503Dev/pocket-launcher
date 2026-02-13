@@ -70,12 +70,12 @@ android {
         jvmTarget = '11'
     }
     aaptOptions {
-        additionalParameters "--package-id", "0x40"
+        additionalParameters "--package-id", "0x05"
         additionalParameters "--allow-reserved-package-id"
     }
     applicationVariants.all { variant ->
         variant.outputs.all {
-            def outputFileName = "${project.name}-v${variant.versionName}-${variant.name}.apk"
+            def outputFileName = "PocketLauncher-v${variant.versionName}.apk"
             it.outputFileName = outputFileName
         }
     }
@@ -97,14 +97,12 @@ dependencies {
     implementation("com.squareup.okio:okio:3.16.2")
     implementation 'io.reactivex.rxjava3:rxjava:3.1.6'
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
-    // Source: https://mvnrepository.com/artifact/com.google.code.gson/gson
     implementation 'com.google.code.gson:gson:2.13.2'
     implementation 'com.squareup.okhttp3:okhttp:4.11.0'
     implementation 'com.github.bumptech.glide:glide:4.16.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
 
-    compileOnlyApi files("libs/bridge.jar")
-    compileOnlyApi files("libs/mc_firebase_1.20.15.jar")
+    compileOnlyApi fileTree(dir: '../api', include: ['*.jar'])
 
     implementation (project(':minecraftpe'))
     implementation project(':common')

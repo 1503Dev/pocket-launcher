@@ -29,6 +29,14 @@ class GlobalDebugWindow(application: Application) {
         @JvmField
         @SuppressLint("StaticFieldLeak")
         var instance: GlobalDebugWindow? = null
+
+        val ENABLED = fun (): Boolean {
+            val v = Utils.getAppVersionName(Utils.application)
+            if (v != null) {
+                if (v.contains("beta") || v.contains("SNAPSHOT")) return true
+            }
+            return false
+        }()
     }
 
     val TAG = "GlobalDebugWindow"
@@ -55,6 +63,7 @@ class GlobalDebugWindow(application: Application) {
         }
 
     init {
+        if (!ENABLED) throw IllegalStateException("GlobalDebugWindow is not enabled")
         instance = this
 
         val themedContext = ContextThemeWrapper(application, R.style.Theme_PocketLauncher)
@@ -127,6 +136,10 @@ class GlobalDebugWindow(application: Application) {
         Log.i(TAG, "Init")
     }
 
+    fun isAddedToWindow(view: View): Boolean {
+        return view.parent != null && view.windowToken != null
+    }
+
     fun addAllViews(){
         val flagsNoTouch = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
@@ -154,6 +167,7 @@ class GlobalDebugWindow(application: Application) {
                 x = config.getFloat("ball_x", 200f).toInt()
                 y = config.getFloat("ball_y", 0f).toInt()
             })
+            updatePositionRelatively(ball)
         } catch (_: Exception) {
         }
     }
@@ -171,7 +185,7 @@ class GlobalDebugWindow(application: Application) {
         } catch (_: Exception) {
         }
     }
-    fun updatePositionRelatively(view: View, dx: Float, dy: Float) {
+    fun updatePositionRelatively(view: View, dx: Float = (view.layoutParams as WindowManager.LayoutParams).x.toFloat(), dy: Float = (view.layoutParams as WindowManager.LayoutParams).y.toFloat()) {
         val params = view.layoutParams as WindowManager.LayoutParams
         params.x = (params.x + dx).toInt()
         params.y = (params.y + dy).toInt()

@@ -1,6 +1,7 @@
 package dev1503.pocketlauncher
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
@@ -45,6 +46,7 @@ object Utils {
     @SuppressLint("StaticFieldLeak")
     var kvGlobalGameConfig: KVConfig? = null
     var kvLauncherSettings: KVConfig? = null
+    var application: Application? = null
 
     @ColorInt
     fun getColorFromAttr(context: Context, attrResId: Int): Int {
@@ -71,16 +73,16 @@ object Utils {
         }
     }
 
-    fun getAppVersionName(context: Context, packageName: String): String? {
+    fun getAppVersionName(context: Context?, packageName: String?): String? {
         return try {
-            context.packageManager.getPackageInfo(packageName, 0).versionName
+            context?.packageManager?.getPackageInfo(packageName ?: return null, 0)?.versionName
         } catch (e: Exception) {
             null
         }
     }
 
-    fun getAppVersionName(context: Context): String? {
-        return getAppVersionName(context, context.packageName)
+    fun getAppVersionName(context: Context?): String? {
+        return getAppVersionName(context, context?.packageName)
     }
 
     fun getDataDirPath(context: Context): String {
