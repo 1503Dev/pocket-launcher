@@ -167,7 +167,7 @@ class GlobalDebugWindow(application: Application) {
                 x = config.getFloat("ball_x", 200f).toInt()
                 y = config.getFloat("ball_y", 0f).toInt()
             })
-            updatePositionRelatively(ball)
+            fixViewPosition(ball)
         } catch (_: Exception) {
         }
     }
@@ -185,10 +185,7 @@ class GlobalDebugWindow(application: Application) {
         } catch (_: Exception) {
         }
     }
-    fun updatePositionRelatively(view: View, dx: Float = (view.layoutParams as WindowManager.LayoutParams).x.toFloat(), dy: Float = (view.layoutParams as WindowManager.LayoutParams).y.toFloat()) {
-        val params = view.layoutParams as WindowManager.LayoutParams
-        params.x = (params.x + dx).toInt()
-        params.y = (params.y + dy).toInt()
+    fun fixViewPosition(view: View, params: WindowManager.LayoutParams = view.layoutParams as WindowManager.LayoutParams) {
         if (params.x < 0) params.x = 0
         if (params.y < 0) params.y = 0
         if (params.x + view.width > (activity?.windowManager?.defaultDisplay?.width ?: 0)) {
@@ -197,7 +194,16 @@ class GlobalDebugWindow(application: Application) {
         if (params.y + view.height > (activity?.windowManager?.defaultDisplay?.height ?: 0)) {
             params.y = (activity?.windowManager?.defaultDisplay?.height ?: 0) - view.height
         }
-        windowManager?.updateViewLayout(view, params)
+        try {
+            windowManager?.updateViewLayout(view, params)
+        } catch (_: Exception) {
+        }
+    }
+    fun updatePositionRelatively(view: View, dx: Float = (view.layoutParams as WindowManager.LayoutParams).x.toFloat(), dy: Float = (view.layoutParams as WindowManager.LayoutParams).y.toFloat()) {
+        val params = view.layoutParams as WindowManager.LayoutParams
+        params.x = (params.x + dx).toInt()
+        params.y = (params.y + dy).toInt()
+        fixViewPosition(view, params)
     }
     fun updateActivity(activity: Activity) {
         this.activity = activity
