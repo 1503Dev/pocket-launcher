@@ -76,6 +76,12 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
             editInstance()
         }
         columnLayout.addItem(
+            self.getString(R.string.all_instances),
+            R.drawable.format_list_bulleted_24px
+        ).onClick = View.OnClickListener {
+            activity.switchFragment("all_instances")
+        }
+        columnLayout.addItem(
             self.getString(R.string.download),
             R.drawable.download_24px,
         ).onClick = View.OnClickListener {

@@ -51,5 +51,5 @@
     <string name="failed_to_change_mod_status">變更模組狀態失敗</string>
     <string name="invalid_mod_version">無效的模組版本名稱</string>
     <string name="information">資訊</string>
-    <string name="infomation_no_mods">沒有適配目前實例的模組</string>
+    <string name="information_no_mods">沒有適配目前實例的模組</string>
 </resources>

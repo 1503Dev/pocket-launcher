@@ -17,7 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 
 public final class Log {
-    private static final String TAG_PREFIX = "PL::";
+    private static final String TAG_PREFIX = "PL/";
 
     public static final int ASSERT = android.util.Log.ASSERT;
     public static final int DEBUG = android.util.Log.DEBUG;

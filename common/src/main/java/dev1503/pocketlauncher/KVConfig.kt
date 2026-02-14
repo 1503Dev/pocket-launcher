@@ -305,4 +305,11 @@ class KVConfig(
             else -> null
         }
     }
+    fun reload() {
+        if (isReleased) return
+        lock.write {
+            cache.clear()
+        }
+        loadFromFile()
+    }
 }

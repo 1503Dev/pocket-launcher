@@ -16,7 +16,7 @@
             app:cardElevation="4dp"
             app:cardCornerRadius="8dp"
             app:cardBackgroundColor="?attr/colorAccent"
-            android:tag="info_no_mods">
+            android:tag="card_information">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -36,7 +36,7 @@
                     android:textColor="#FF004F6A"
                     android:gravity="center_vertical"
                     android:paddingStart="4dp"
-                    android:text="@string/information_no_mods"/>
+                    android:text="@string/no_instance_installed"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
         <com.google.android.material.card.MaterialCardView
@@ -46,15 +46,15 @@
             app:cardElevation="4dp"
             app:cardCornerRadius="8dp"
             app:cardBackgroundColor="@color/card_background"
-            android:tag="mods">
+            android:tag="card_instances">
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
-                <dev1503.pocketlauncher.launcher.widgets.ModListView
+                <dev1503.pocketlauncher.launcher.widgets.InstanceListView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:tag="mod_list"/>
+                    android:tag="instance_list"/>
             </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>

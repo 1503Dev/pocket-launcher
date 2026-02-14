@@ -8,6 +8,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.JsonObject
+import dev1503.pocketlauncher.InstanceInfo
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
@@ -104,22 +105,26 @@ class FragmentDownload (self: AppCompatActivity) : Fragment(self, ColumnLayout(s
                         dialogLoading.text = self.getString(R.string.creating_manifest)
                     }
                     try {
-                        val manifest = JsonObject()
-                        manifest.addProperty("version", 1)
-                        val manifestInstance = JsonObject()
-                        manifestInstance.addProperty("type", "full_apk")
-                        manifestInstance.addProperty("entity", sourceSha1)
-                        manifestInstance.addProperty("version_name",versionName)
-                        manifestInstance.addProperty("version_code",versionCode)
-                        manifestInstance.addProperty("install_time",System.currentTimeMillis())
-                        manifestInstance.addProperty("source", "device_installed")
-                        manifest.add("instance", manifestInstance)
+                        val apkArch = Utils.getApkArch(sourcePath?: "")
+                        val instanceInfo = InstanceInfo(
+                            name = instanceName,
+                            versionName = versionName?:"UNKNOWN",
+                            versionCode = versionCode,
+                            installTime = System.currentTimeMillis(),
+                            source = "device_installed",
+                            entityType = "full_apk",
+                            entity = sourceSha1,
+                            arch = apkArch,
+                            context = context,
+                            dirPath = "$root/",
+                            initKv = false,
+                        )
 
                         val config = JsonObject()
                         config.addProperty("version", 1)
                         config.addProperty("data_isolation", true)
                         config.addProperty("data_storage_dir", ":INSTANCE/data/")
-                        if (Utils.fileWriteString("$root/manifest.json", manifest.toString()) &&
+                        if (Utils.fileWriteString("$root/manifest.json", instanceInfo.toJsonString()) &&
                             Utils.fileWriteString("$root/config.json", config.toString()) &&
                             Utils.isInstanceEntityExist(context, "apk", sourceSha1)
                         ) {

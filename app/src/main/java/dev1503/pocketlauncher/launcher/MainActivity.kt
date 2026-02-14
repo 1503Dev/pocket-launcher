@@ -18,6 +18,7 @@ import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.launcher.fragments.Fragment
+import dev1503.pocketlauncher.launcher.fragments.FragmentAllInstances
 import dev1503.pocketlauncher.launcher.fragments.FragmentDownload
 import dev1503.pocketlauncher.launcher.fragments.FragmentMain
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
@@ -74,8 +75,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun initLayouts() {
         initTitleBar()
-        fragments.put("main", FragmentMain(self))
-        fragments.put("download", FragmentDownload(self))
+        fragments["main"] = FragmentMain(self)
+        fragments["download"] = FragmentDownload(self)
+        fragments["all_instances"] = FragmentAllInstances(self)
 
         switchFragment("main")
     }
@@ -141,6 +143,9 @@ class MainActivity : AppCompatActivity() {
                     }
                     "download" -> {
                         titleBarTitle.text = getString(R.string.download)
+                    }
+                    "all_instances" -> {
+                        titleBarTitle.text = getString(R.string.all_instances)
                     }
                 }
             } else {

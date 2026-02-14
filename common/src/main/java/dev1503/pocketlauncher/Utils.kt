@@ -39,6 +39,7 @@ import java.util.regex.Pattern
 import kotlin.math.roundToInt
 import androidx.core.graphics.createBitmap
 import dev1503.pocketlauncher.modloader.ModInfo
+import java.util.zip.ZipFile
 
 object Utils {
     const val TAG = "Utils"
@@ -403,31 +404,9 @@ object Utils {
         val instanceNames = getInstanceNames(context)
         val instances = ArrayList<InstanceInfo>()
         for (name in instanceNames) {
-            try {
-                val instanceDir = File(getInstancesDirPath(context) + name)
-                val manifestFile = File(instanceDir, "manifest.json")
-                val manifestJson = fileReadString(manifestFile.absolutePath) ?: continue
-                val manifest = Gson().fromJson(manifestJson, JsonObject::class.java)
-                val mInstance = manifest.getAsJsonObject("instance")
-                val versionName = mInstance.get("version_name").asString
-                val versionCode = mInstance.get("version_code").asLong
-                val installTime = mInstance.get("install_time").asLong
-                val source = mInstance.get("source").asString
-                val entityType = mInstance.get("type").asString
-                instances.add(
-                    InstanceInfo(
-                        name,
-                        versionName,
-                        versionCode,
-                        installTime,
-                        source,
-                        instanceDir.absolutePath + "/",
-                        entityType,
-                        mInstance.get("entity").asString
-                    )
-                )
-            } catch (e: Exception) {
-                Log.w(TAG, e)
+            val instance = getInstanceInfo(context, name)
+            if (instance != null) {
+                instances.add(instance)
             }
         }
         return instances
@@ -447,6 +426,12 @@ object Utils {
             val source = mInstance.get("source").asString
             val entityType = mInstance.get("type").asString
             val entity = mInstance.get("entity").asString
+            var arch = ""
+            var rewrite = false
+            if (!mInstance.has("arch")) {
+                arch = getApkArch(getInstanceEntitiesDirPath(context, "apk") + entity + ".apk")
+                rewrite = true
+            } else arch = mInstance.get("arch").asString
             return InstanceInfo(
                 name,
                 versionName,
@@ -456,9 +441,12 @@ object Utils {
                 instanceDir.absolutePath + "/",
                 entityType,
                 entity,
+                arch,
                 context,
                 initKv
-            )
+            ).apply {
+                if (rewrite) this.rewrite()
+            }
         } catch (e: Exception) {
             Log.e(TAG, e)
         }
@@ -674,6 +662,25 @@ object Utils {
         } else {
             "${manufacturer.uppercase(Locale.ENGLISH)} $model"
         }
+    }
+    fun getApkArch(apkPath: String): String {
+        val architectures = mutableSetOf<String>()
+
+        ZipFile(apkPath).use { zip ->
+            zip.entries().asSequence().forEach { entry ->
+                if (entry.name.startsWith("lib/") && entry.name.count { it == '/' } >= 2) {
+                    val arch = entry.name.split("/")[1]
+                    if (arch.isNotEmpty()) {
+                        architectures.add(arch)
+                    }
+                }
+            }
+        }
+
+        return if (architectures.isEmpty()) "*" else architectures.joinToString(" ")
+    }
+    fun getProcessArch(): String {
+        return Build.SUPPORTED_ABIS[0]
     }
 
     interface FilesSearchWithContentListener {

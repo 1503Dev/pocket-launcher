@@ -15,6 +15,7 @@ open class InstanceInfo(
     val dirPath: String,
     val entityType: String,
     val entity: String,
+    val arch: String,
     val context: Context? = null,
     val initKv: Boolean = false,
 ) {
@@ -78,8 +79,33 @@ open class InstanceInfo(
             return Utils.getModsInfoByPackagesAndVersions(context!!, pkg, v)
         }
     var deviceModel: String
-        get() = config.getString("device_model", Utils.getDeviceModelName())
+        get() = config.getString("device_model", "")
         set(value) {
             config.set("device_model", value)
         }
+
+    fun toGson(): JsonObject {
+        val json = JsonObject()
+        json.addProperty("version", 1)
+        val instance = JsonObject()
+        instance.addProperty("version_name", versionName)
+        instance.addProperty("version_code", versionCode)
+        instance.addProperty("install_time", installTime)
+        instance.addProperty("source", source)
+        instance.addProperty("type", entityType)
+        instance.addProperty("entity", entity)
+        instance.addProperty("arch", arch)
+        json.add("instance", instance)
+        return json
+    }
+
+    fun toJsonString(): String {
+        return Gson().toJson(toGson())
+    }
+    fun rewrite() {
+        Utils.fileWriteString(dirPath + "manifest.json", toJsonString())
+        if (context != null && ::config.isInitialized && !config.isReleased) {
+            config.reload()
+        }
+    }
 }

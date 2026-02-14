@@ -51,9 +51,13 @@
     <string name="failed_to_change_mod_status">Failed to change mod status</string>
     <string name="invalid_mod_version">Invalid mod version name</string>
     <string name="information">Information</string>
-    <string name="infomation_no_mods">No mod is adapted to the current instance</string>
+    <string name="information_no_mods">No mod is adapted to the current instance</string>
     <string name="launcher">Launcher</string>
     <string name="game">Game</string>
     <string name="device_model">Device Model</string>
     <string name="reset">Reset</string>
+    <string name="repackaging_apk">Repackaging APK</string>
+    <string name="internal_storage">Internal Storage</string>
+    <string name="all_instances">All Instances</string>
+    <string name="leave_blank_to_follow_global">Leave blank to follow global settings</string>
 </resources>

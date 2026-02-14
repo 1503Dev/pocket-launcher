@@ -74,6 +74,11 @@ class ColumnLayout : LinearLayout {
         setContentLayout(View.inflate(context, layoutId, null) as ViewGroup)
     }
 
+    fun removeContentLayout() {
+        contentContainer.removeAllViews()
+        lastContentLayout = null
+    }
+
     fun addDivider(text: CharSequence) {
         val divider = View.inflate(context, R.layout.layout_column_layout_divider, null)
         divider.findViewWithTag<TextView>("text")?.text = text

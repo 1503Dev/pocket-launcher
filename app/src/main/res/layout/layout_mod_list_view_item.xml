@@ -13,8 +13,8 @@
         android:layout_height="wrap_content"
         android:tag="checkbox"/>
     <ImageView
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
         android:scaleType="fitCenter"
         android:src="@drawable/extension_24px"
         android:tag="icon"/>

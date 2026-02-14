@@ -1,5 +1,6 @@
 package dev1503.pocketlauncher.modloader
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import dalvik.system.PathClassLoader
 import dev1503.pocketlauncher.InstanceInfo
@@ -96,6 +97,7 @@ class ModLoader(val activity: Activity, val classLoader: ClassLoader) {
         loadNextMod()
     }
 
+    @SuppressLint("UnsafeDynamicallyLoadedCode")
     fun loadMod(mod: ModInfo, instanceInfo: InstanceInfo, finishCallback: (Boolean, String) -> Unit) {
         if (!mod.isVersionSupported(instanceInfo.versionName)) {
             finishCallback(false, activity.getString(R.string.mod_not_supported_version, mod.name))
@@ -119,7 +121,12 @@ class ModLoader(val activity: Activity, val classLoader: ClassLoader) {
                         addDexPath.invoke(pathList, mod.entryFilePath, null)
 
                         invokeEntryMethod(instanceInfo, mod, finishCallback)
-                    } else -> {
+                    }
+                    "so" -> {
+                        System.load(mod.entryFilePath)
+                        finishCallback(true, "Success to load native mod: ${mod.name}")
+                    }
+                    else -> {
                         finishCallback(false, "Unsupported entry suffix: ${mod.entrySuffix}")
                     }
                 }
@@ -163,6 +170,6 @@ class ModLoader(val activity: Activity, val classLoader: ClassLoader) {
 
         val pl = PocketLauncher(instanceInfo, mod, modIndex)
         entryMethodObj.invoke(null, activity, pl)
-        finishCallback(true, "Mod loaded successfully: ${mod.name}")
+        finishCallback(true, "Success to load Java mod: ${mod.name}")
     }
 }

@@ -117,6 +117,7 @@
                         android:maxLines="1"
                         android:tag="input"
                         android:textSize="14sp"
+                        android:hint="@string/leave_blank_to_follow_global"
                         android:layout_weight="1"/>
                 </LinearLayout>
             </LinearLayout>

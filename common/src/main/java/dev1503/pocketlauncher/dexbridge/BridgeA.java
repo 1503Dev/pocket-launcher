@@ -26,7 +26,7 @@ public class BridgeA {
 
         InstanceInfo selectedInstance = utils.getSelectedInstance(self, true);
         if (selectedInstance == null) {
-            selectedInstance = new InstanceInfo(null, "", 0, 0, "", "", "", "", null, false);
+            selectedInstance = new InstanceInfo(null, "", 0, 0, "", "", "", "",  "", null, false);
         }
 
         this.instanceInfo = selectedInstance;
@@ -37,6 +37,10 @@ public class BridgeA {
         return instanceInfo.getDataStorageDirParsed();
     }
     public String getDeviceModel() {
-        return instanceInfo.getDeviceModel();
+        String deviceModel = instanceInfo.getDeviceModel();
+        if (deviceModel.isEmpty()) {
+            deviceModel = kvGlobalGameConfig.getString("device_model", utils.getDeviceModelName());
+        }
+        return deviceModel;
     }
 }
