@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageInfo
 import android.os.Build
 import android.view.View
-import androidx.annotation.RequiresApi
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
@@ -56,10 +55,15 @@ class FragmentDownload (self: MainActivity) : Fragment(self, ColumnLayout(self),
     }
 
     fun installFromDeviceInstalled() {
-        val packageInfoList = Utils.getAllMCPossiblePackages(self)
+        var packageInfoList = Utils.getAllMCPossiblePackages(self)
         if (packageInfoList == null) {
-            Snackbar.make(layout, "Error", Snackbar.LENGTH_SHORT).show()
-            return
+            packageInfoList = Utils.getAllUserPackages(self)!!
+        }
+        var dialog: DialogLoading? = null
+        if (packageInfoList.size > 15) {
+            dialog = DialogLoading(self, self.getString(R.string.loading), DialogLoading.TYPE_CIRCULAR).init()
+            dialog.text = self.getString(R.string.loading_packages)
+            dialog.show()
         }
         PackagePicker(self, packageInfoList).apply {
             onPackageSelected = { packageInfo ->
@@ -68,14 +72,17 @@ class FragmentDownload (self: MainActivity) : Fragment(self, ColumnLayout(self),
                 TextPicker(self, self.getString(R.string.instance_name), "${appName} v${appVersion}".trim()).apply {
                     onInputFinish = { instanceName ->
                         if (!Utils.testFileName(instanceName)) {
-                            Snackbar.make(layout, self.getString(R.string.invalid_instance_name), Snackbar.LENGTH_LONG).show()
+                            mainActivity.snack(R.string.invalid_instance_name, Snackbar.LENGTH_LONG)
                         } else if (Utils.isInstanceExist(context, instanceName)) {
-                            Snackbar.make(layout, self.getString(R.string.instance_name_is_used), Snackbar.LENGTH_LONG).show()
+                            mainActivity.snack(R.string.instance_name_is_used, Snackbar.LENGTH_LONG)
                         } else {
                             installFromDeviceInstalled(packageInfo, instanceName)
                         }
                     }
                 }.show()
+            }
+            onShow = {
+                dialog?.cancel()
             }
         }.show()
     }
@@ -199,6 +206,9 @@ class FragmentDownload (self: MainActivity) : Fragment(self, ColumnLayout(self),
                 alert(R.string.you_need_to_grant_permission_to_continue, R.string.information)
             }
         })
+
+        val cacheDir = Utils.getADirIPath(self, "cache/launcher/file_stream")
+        Utils.fileRemove(cacheDir)
     }
 
     fun installFromApkFileNext() {
@@ -245,15 +255,15 @@ class FragmentDownload (self: MainActivity) : Fragment(self, ColumnLayout(self),
 
                 fun installFinish(failed: Boolean = false, apkInfo: Utils.ApkInfo?, instanceName: String? = null, isDialogCanceled: Boolean = true) {
                     if (!failed && apkInfo != null && instanceName != null) {
+                        val root = Utils.getInstancesDirPath(self) + instanceName
                         try {
-                            val root = Utils.getInstancesDirPath(self) + instanceName
                             if (!isDialogCanceled) {
                                 val path = Utils.getInstanceEntitiesDirPath(self, "apk")
                                 self.lifecycleScope.launch(Dispatchers.IO) {
                                     var lastProgress = -1
                                     Utils.fileCopy(apkPath, "$path$sourceSha1.apk", { progress, copiedSize, totalSize ->
                                         if (progress >= 100) {
-                                            apkPath = path
+                                            apkPath = "$path$sourceSha1.apk"
                                             Utils.fileRemove(cacheDir)
                                             uiRun { dialogLoading.cancel() }
                                             installFinish(false, apkInfo, instanceName)
@@ -300,11 +310,13 @@ class FragmentDownload (self: MainActivity) : Fragment(self, ColumnLayout(self),
                                 return
                             }
                         } catch (e: Exception) {
+                            Utils.fileRemove(root)
                             Log.e(TAG, e)
                         }
                     }
                     Log.e(TAG, "Failed to install")
                     Utils.fileRemove(cacheDir)
+                    Utils.fileRemove(apkPath)
                     uiRun {
                         MaterialAlertDialogBuilder(self)
                             .setTitle(R.string.install_failed)
@@ -321,9 +333,11 @@ class FragmentDownload (self: MainActivity) : Fragment(self, ColumnLayout(self),
                         TextPicker(self, self.getString(R.string.instance_name), "${apkInfo.appName} v${apkInfo.versionName}".trim()).apply {
                             onInputFinish = { instanceName ->
                                 if (!Utils.testFileName(instanceName)) {
-                                    Snackbar.make(layout, self.getString(R.string.invalid_instance_name), Snackbar.LENGTH_LONG).show()
+                                    mainActivity.snack(R.string.invalid_instance_name, Snackbar.LENGTH_LONG)
+                                    dialogLoading.cancel()
                                 } else if (Utils.isInstanceExist(context, instanceName)) {
-                                    Snackbar.make(layout, self.getString(R.string.instance_name_is_used), Snackbar.LENGTH_LONG).show()
+                                    mainActivity.snack(R.string.instance_name_is_used, Snackbar.LENGTH_LONG)
+                                    dialogLoading.cancel()
                                 } else {
                                     installFinish(false, apkInfo, instanceName)
                                 }
@@ -337,9 +351,11 @@ class FragmentDownload (self: MainActivity) : Fragment(self, ColumnLayout(self),
                         TextPicker(self, self.getString(R.string.instance_name), "${apkInfo.appName} v${apkInfo.versionName}".trim()).apply {
                             onInputFinish = { instanceName ->
                                 if (!Utils.testFileName(instanceName)) {
-                                    Snackbar.make(layout, self.getString(R.string.invalid_instance_name), Snackbar.LENGTH_LONG).show()
+                                    mainActivity.snack(R.string.invalid_instance_name, Snackbar.LENGTH_LONG)
+                                    dialogLoading.cancel()
                                 } else if (Utils.isInstanceExist(context, instanceName)) {
-                                    Snackbar.make(layout, self.getString(R.string.instance_name_is_used), Snackbar.LENGTH_LONG).show()
+                                    mainActivity.snack(R.string.instance_name_is_used, Snackbar.LENGTH_LONG)
+                                    dialogLoading.cancel()
                                 } else {
                                     installFinish(false, apkInfo, instanceName, false)
                                 }

@@ -20,6 +20,7 @@ import dev1503.pocketlauncher.KVConfig
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
+import dev1503.pocketlauncher.launcher.MainActivity
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
 import dev1503.pocketlauncher.launcher.widgets.ModListView
 
@@ -27,6 +28,7 @@ class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceI
     private val col = layout as ColumnLayout
     val checkableItems = ArrayList<ColumnLayout.ColumnLayoutItem>()
     val instanceConfig = KVConfig(self, instanceInfo.dirPath + "config.json")
+    val mainActivity: MainActivity = self as MainActivity
 
     val TAG = "FragmentEditInstance/${instanceInfo.name}"
 
@@ -58,7 +60,7 @@ class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceI
         fun initInstanceIcon() {
             val instanceIcon = l.findViewWithTag<ViewGroup>("instance_icon").apply {
                 setOnClickListener { _ ->
-                    Snackbar.make(layout, "TODO", Snackbar.LENGTH_SHORT).show()
+                    mainActivity.snack("TODO")
                 }
             }
             val instanceIconView = instanceIcon.findViewWithTag<ImageView>("instance_icon_icon").apply {
@@ -80,7 +82,7 @@ class FragmentEditInstance (self: AppCompatActivity, val instanceInfo: InstanceI
                                     instanceInfo.dataStorageDir = ":INSTANCE/data/"
                                 }
                             }
-                            Snackbar.make(layout, self.getString(R.string.working_directory_set_to, instanceInfo.dataStorageDirParsed), Snackbar.LENGTH_SHORT).show()
+                            mainActivity.snack(self.getString(R.string.working_directory_set_to, instanceInfo.dataStorageDirParsed))
                         }
                         .show()
                 }

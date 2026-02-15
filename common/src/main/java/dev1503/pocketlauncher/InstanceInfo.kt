@@ -83,6 +83,17 @@ open class InstanceInfo(
         set(value) {
             config.set("device_model", value)
         }
+    val isArchAvailable: Boolean
+        get() {
+            if (arch.contains(" ")) {
+                arch.split(" ").forEach {
+                    if (it == Utils.getProcessArch()) return true
+                }
+            } else {
+                if (arch == Utils.getProcessArch()) return true
+            }
+            return false
+        }
 
     fun toGson(): JsonObject {
         val json = JsonObject()

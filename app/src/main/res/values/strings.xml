@@ -65,4 +65,11 @@
     <string name="invalid_file_type">Invalid file type</string>
     <string name="caching_apk">Caching APK</string>
     <string name="warning_arch_incompatible">Process architecture %s is incompatible with instance architecture %s. You need to install %s architecture of %s to continue</string>
+    <string name="loading">Loading</string>
+    <string name="loading_packages">Loading packages</string>
+    <string name="delete_instance">Delete Instance</string>
+    <string name="delete_instance_confirm">Are you sure you want to remove instance %s? This will delete all data of the instance (including your game saves, etc.)</string>
+    <string name="delete_and_abandon_saves">Delete And Abandon Saves</string>
+    <string name="removing_files">Removing files</string>
+    <string name="instance_deleted">Instance %s deleted</string>
 </resources>

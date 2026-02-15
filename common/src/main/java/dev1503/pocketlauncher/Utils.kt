@@ -5,6 +5,7 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -237,23 +238,55 @@ object Utils {
         }
     }
 
-    fun getAllMCPossiblePackages(context: Context?): List<PackageInfo>? {
+    fun getAllUserPackages(context: Context?, sortEnabled: Boolean = true): List<PackageInfo>? {
         if (context == null) {
             return null
         }
         return try {
-            val packageInfoList = context.packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
+            val packages = context.packageManager.getInstalledPackages(PackageManager.GET_META_DATA)
+            packages.filter {
+                it.applicationInfo?.flags?.and(ApplicationInfo.FLAG_SYSTEM) == 0
+            }.apply {
+                if (sortEnabled) {
+                    packages.sortBy {
+                        it.applicationInfo?.loadLabel(context.packageManager)?.toString()?.lowercase()
+                                ?: ""
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, e)
+            null
+        }
+    }
+
+    fun getAllMCPossiblePackages(context: Context?): List<PackageInfo>? {
+//        if (true) return null
+        if (context == null) {
+            return null
+        }
+        return try {
+            val packageInfoList = getAllUserPackages(context, false) ?: return null
             val mcPackages = ArrayList<PackageInfo>()
             for (packageInfo in packageInfoList) {
                 if (packageInfo.packageName.startsWith("com.mojang.")) {
                     mcPackages.add(packageInfo)
                 }
             }
-            mcPackages
+            mcPackages.apply {
+                mcPackages.sortBy {
+                    it.applicationInfo?.loadLabel(context.packageManager)?.toString()?.lowercase()
+                       ?: ""
+                }
+            }
         } catch (e: Exception) {
             Log.e(TAG, e)
             null
         }
+    }
+
+    fun setSelectedInstance(name: String) {
+        kvLauncherSettings?.set("instance", name)
     }
 
     fun getInstancesDirPath(context: Context): String {
@@ -733,6 +766,7 @@ object Utils {
         }
     }
     fun getApkArch(apkPath: String): String {
+        Log.d(TAG, "Opening $apkPath")
         val architectures = mutableSetOf<String>()
 
         ZipFile(apkPath).use { zip ->
@@ -783,6 +817,9 @@ object Utils {
                 path = apkPath
             )
         } ?: throw IllegalArgumentException("Invalid APK file: $apkPath")
+    }
+    fun getInstancesByEntity(context: Context, entity: String): List<InstanceInfo> {
+        return getAllInstances(context).filter { it.entity == entity }
     }
 
     interface FilesSearchWithContentListener {

@@ -23,6 +23,7 @@ import dev1503.pocketlauncher.KVConfig
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
+import dev1503.pocketlauncher.Utils.kvLauncherSettings
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
 import dev1503.pocketlauncher.launcher.widgets.InstanceListView
 import dev1503.pocketlauncher.launcher.widgets.ModListView
@@ -59,9 +60,12 @@ class FragmentAllInstances (self: AppCompatActivity) : Fragment(self, ColumnLayo
 
     fun getContentLayout(): ScrollView {
         val l = LinearLayout.inflate(self, R.layout.layout_launcher_all_instances, null) as ScrollView
+        l.alpha = 0f
 
         val instanceListCard = l.findViewWithTag<MaterialCardView>("card_instances")
-        val instanceListView = l.findViewWithTag<InstanceListView>("instance_list")
+        val instanceListView = l.findViewWithTag<InstanceListView>("instance_list").apply {
+            activity = self
+        }
         val infoCard = l.findViewWithTag<MaterialCardView>("card_information")
 
         val instances = Utils.getAllInstances(self)
@@ -75,6 +79,10 @@ class FragmentAllInstances (self: AppCompatActivity) : Fragment(self, ColumnLayo
         instanceListCard.isVisible = true
 
         instanceListView.instanceList = instances
+        instanceListView.selectedInstance = Utils.getSelectedInstance(self)
+        instanceListView.onInstanceSelectedListener = { instanceInfo ->
+            kvLauncherSettings?.set("instance", instanceInfo.name)
+        }
 
         return l
     }

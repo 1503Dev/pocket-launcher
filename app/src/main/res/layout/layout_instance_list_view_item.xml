@@ -4,7 +4,7 @@
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:paddingStart="4dp"
-    android:paddingEnd="22dp"
+    android:paddingEnd="8dp"
     android:gravity="center_vertical"
     android:background="?attr/selectableItemBackground"
     android:orientation="horizontal">
@@ -21,7 +21,8 @@
         android:src="@drawable/deployed_code_24px"
         android:tag="icon"/>
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
+        android:layout_weight="1"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
         android:layout_marginStart="8dp"
@@ -67,4 +68,11 @@
             android:textSize="10sp"
             android:tag="description"/>
     </LinearLayout>
+    <ImageView
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:padding="4dp"
+        android:background="@drawable/ripple_circular"
+        android:tag="more"
+        android:src="@drawable/more_vert_24px"/>
 </LinearLayout>

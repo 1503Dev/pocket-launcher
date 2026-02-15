@@ -13,7 +13,10 @@ open class Fragment (open var self: AppCompatActivity, val layout: ViewGroup, va
     var isInit: Boolean = false
 
     open fun init(): Boolean {
-        if (isInit) return false
+        if (isInit) {
+            onResume()
+            return false
+        }
         layout.layoutParams = ViewGroup.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
@@ -21,6 +24,10 @@ open class Fragment (open var self: AppCompatActivity, val layout: ViewGroup, va
         Log.i(fragmentName, "Init")
         isInit = true
         return true
+    }
+
+    open fun onResume() {
+        Log.i(fragmentName, "onResume()")
     }
 
     fun findViewWithTag(tag: String): View {

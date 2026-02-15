@@ -103,6 +103,7 @@ dependencies {
     // Source: https://mvnrepository.com/artifact/net.raphimc/MinecraftAuth
     implementation 'net.raphimc:MinecraftAuth:5.0.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.16.0'
+    implementation 'com.github.li-xiaojun:XPopup:2.10.0'
 
     debugImplementation("com.reqable.android:user-certificate-trust:1.0.0")
 

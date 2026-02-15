@@ -1,26 +1,40 @@
 package dev1503.pocketlauncher.launcher.widgets
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.util.AttributeSet
+import android.view.Gravity
+import android.view.Menu
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.LinearLayout.VERTICAL
 import android.widget.ScrollView
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.PopupMenu
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.card.MaterialCardView
 import com.google.android.material.checkbox.MaterialCheckBox
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.radiobutton.MaterialRadioButton
 import dev1503.pocketlauncher.InstanceInfo
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 import dev1503.pocketlauncher.Utils
 import dev1503.pocketlauncher.Utils.dp2px
+import dev1503.pocketlauncher.Utils.kvLauncherSettings
+import dev1503.pocketlauncher.launcher.MainActivity
+import dev1503.pocketlauncher.launcher.dialogs.DialogLoading
 import dev1503.pocketlauncher.modloader.ModInfo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class InstanceListView: ScrollView {
     val TAG = "InstanceListView"
+
+    private var _selectedInstance: InstanceInfo? = null
 
     var instanceList: List<InstanceInfo>? = emptyList()
         get() = field
@@ -30,6 +44,14 @@ class InstanceListView: ScrollView {
                 addInstance(instanceInfo)
             }
         }
+    var selectedInstance: InstanceInfo?
+        get() = _selectedInstance
+        set(value) {
+            _selectedInstance = value
+            instanceListItems.forEach { item ->
+                item.radioButton.isChecked = item.instanceInfo?.name == value?.name
+            }
+        }
     var onInstanceSelectedListener: ((InstanceInfo) -> Unit)? = null
 
     val container: LinearLayout = LinearLayout(context).apply {
@@ -37,6 +59,7 @@ class InstanceListView: ScrollView {
         layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     }
     val instanceListItems: MutableList<InstanceListItem> = mutableListOf()
+    var activity: AppCompatActivity? = null
 
     constructor(context: Context) : super(context) {
         init()
@@ -61,12 +84,68 @@ class InstanceListView: ScrollView {
             this.radioButton.setOnClickListener { _ ->
                 _onInstanceChecked(instanceInfo)
             }
+            this.moreIcon.setOnClickListener { _ ->
+                val popup = PopupMenu(context, moreIcon).apply {
+                    gravity = Gravity.END or Gravity.BOTTOM
+                }
+                popup.menu.add(Menu.NONE, 0, 0, R.string.delete_instance)
+                popup.setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.itemId) {
+                        0 -> {
+                            MaterialAlertDialogBuilder(context)
+                                .setTitle(R.string.delete_instance)
+                                .setMessage(context.getString(R.string.delete_instance_confirm, instanceInfo.name))
+                                .setPositiveButton(R.string.delete_and_abandon_saves) { _, _ ->
+                                    removeInstance(instanceInfo)
+                                }
+                                .show()
+                        }
+                    }
+                    true
+                }
+                popup.show()
+            }
         }
         instanceListItems.add(view)
         container.addView(view)
     }
 
+    fun removeInstance(instanceInfo: InstanceInfo) {
+        val dialog = DialogLoading(context, context.getString(R.string.delete_instance),
+            DialogLoading.TYPE_CIRCULAR).init().apply {
+                this.text = context.getString(R.string.removing_files)
+            }
+        dialog.show()
+        activity?.lifecycleScope?.launch(Dispatchers.IO) {
+            if (selectedInstance?.name == instanceInfo.name) {
+                _selectedInstance = null
+                Utils.setSelectedInstance("")
+            }
+            activity?.runOnUiThread {
+                instanceListItems.forEach { item ->
+                    if (item.instanceInfo?.name == instanceInfo.name) {
+                        container.removeView(item)
+                    }
+                }
+                instanceListItems.removeIf { it.instanceInfo?.name == instanceInfo.name }
+            }
+
+            val all = Utils.getInstancesByEntity(context, instanceInfo.entity)
+            if (all.size == 1 && instanceInfo.apkPath != null) {
+                Utils.fileRemove(instanceInfo.apkPath?:"")
+            }
+            Utils.fileRemove(instanceInfo.dirPath)
+            activity?.runOnUiThread {
+                dialog.cancel()
+                if (activity!! is MainActivity) {
+                    (activity as MainActivity).snack(context.getString(R.string.instance_deleted, instanceInfo.name))
+                }
+            }
+        }
+    }
+
     private fun _onInstanceChecked(instanceInfo: InstanceInfo) {
+        selectedInstance = instanceInfo
         onInstanceSelectedListener?.invoke(instanceInfo)
     }
 
@@ -85,6 +164,8 @@ class InstanceListView: ScrollView {
             get() = findViewWithTag<MaterialCardView>("arch")!!
         val archChipTextView: TextView
             get() = archChip.findViewWithTag<TextView>("text")!!
+        val moreIcon: ImageView
+            get() = findViewWithTag<ImageView>("more")!!
 
         var instanceInfo: InstanceInfo? = null
             @SuppressLint("SetTextI18n")
@@ -97,10 +178,9 @@ class InstanceListView: ScrollView {
                 if (value?.versionName != null) {
                     descriptionView.text = "v" + value.versionName
                 }
-                val processArch = Utils.getProcessArch()
-                if (value?.arch != processArch) {
+                if (value?.isArchAvailable == false) {
                     archChip.visibility = VISIBLE
-                    archChipTextView.setText(value?.arch)
+                    archChipTextView.setText(value.arch.split(" ").joinToString("/"))
                 } else {
                     archChip.visibility = GONE
                 }

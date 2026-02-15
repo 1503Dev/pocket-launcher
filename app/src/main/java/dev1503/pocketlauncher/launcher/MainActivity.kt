@@ -32,6 +32,7 @@ import dev1503.pocketlauncher.launcher.fragments.FragmentMain
 import dev1503.pocketlauncher.launcher.widgets.ColumnLayout
 import kotlin.random.Random
 import androidx.core.net.toUri
+import com.google.android.material.snackbar.Snackbar
 import java.io.InputStream
 
 class MainActivity : AppCompatActivity() {
@@ -169,7 +170,7 @@ class MainActivity : AppCompatActivity() {
     }
     @SuppressLint("SetTextI18n")
     fun switchFragment(fragment: Fragment, pageName: String) {
-        fragments.put(fragment.fragmentName, fragment)
+        fragments[fragment.fragmentName] = fragment
         val string = fragment.fragmentName
         val curFragment: Fragment? = fragments[currentFragmentName]
         (curFragment?.layout as ColumnLayout).slideOut {
@@ -290,5 +291,22 @@ class MainActivity : AppCompatActivity() {
         } else {
             ActivityCompat.requestPermissions(activity, arrayOf(permission), code)
         }
+    }
+
+    fun snack(message: String, duration: Int = Snackbar.LENGTH_SHORT) {
+        val fMain: FragmentMain = fragments["main"] as FragmentMain
+        fMain.liftFab()
+        Snackbar.make(contentView, message, duration).addCallback(object : Snackbar.Callback() {
+            override fun onShown(transientBottomBar: Snackbar?) {
+                fMain.liftFab(true)
+            }
+            override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+                fMain.lowerFab()
+                super.onDismissed(transientBottomBar, event)
+            }
+        }).show()
+    }
+    fun snack(message: Int, duration: Int = Snackbar.LENGTH_SHORT) {
+        snack(self.getString(message), duration)
     }
 }

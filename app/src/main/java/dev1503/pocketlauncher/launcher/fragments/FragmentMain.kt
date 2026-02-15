@@ -1,6 +1,7 @@
 package dev1503.pocketlauncher.launcher.fragments
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Build
@@ -8,6 +9,7 @@ import android.view.Gravity
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AccelerateDecelerateInterpolator
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -20,6 +22,10 @@ import com.google.android.material.progressindicator.LinearProgressIndicator
 import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.lxj.xpopup.XPopup
+import com.lxj.xpopup.core.AttachPopupView
+import com.lxj.xpopup.core.BasePopupView
+import com.lxj.xpopup.interfaces.OnSelectListener
 import dev1503.pocketlauncher.HttpUtils
 import dev1503.pocketlauncher.InstanceInfo
 import dev1503.pocketlauncher.KVConfig
@@ -27,11 +33,13 @@ import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 //import dev1503.pocketlauncher.common.R as CR
 import dev1503.pocketlauncher.Utils
+import dev1503.pocketlauncher.Utils.dp2px
 import dev1503.pocketlauncher.Utils.kvGlobalGameConfig
 import dev1503.pocketlauncher.Utils.kvLauncherSettings
 import dev1503.pocketlauncher.XboxAPI
 import dev1503.pocketlauncher.dexbridge.BridgeA
 import dev1503.pocketlauncher.dexbridge.BridgeB
+import dev1503.pocketlauncher.dexbridge.BridgeB.self
 import dev1503.pocketlauncher.dexbridge.MinecraftActivity
 import dev1503.pocketlauncher.launcher.MainActivity
 import dev1503.pocketlauncher.launcher.MainActivity.Companion.TAG
@@ -54,6 +62,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
     private val activity: MainActivity = self as MainActivity
     val columnLayout: ColumnLayout = layout as ColumnLayout
     lateinit var btnLaunchInstanceName: TextView
+    lateinit var fab: LinearLayout
 
     @Override
     override fun init(): Boolean {
@@ -89,6 +98,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         }
 
         columnLayout.setContentLayout(View.inflate(self, R.layout.layout_launcher_main, null) as ViewGroup)
+        fab = columnLayout.contentContainer.findViewWithTag<LinearLayout>("fab")!!
 
         columnLayout.contentContainer.findViewWithTag<View>("btn_select_instance")?.setOnClickListener { v-> selectInstance(v)}
         val btnLaunch = columnLayout.contentContainer.findViewWithTag<View>("btn_launch")
@@ -96,7 +106,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
             try {
                 val instanceInfo = Utils.getInstanceInfo(self, kvLauncherSettings?.getString("instance", ""), true)
                 if (instanceInfo == null) {
-                    Snackbar.make(layout, R.string.no_instance_selected, Snackbar.LENGTH_SHORT).show()
+                    activity.snack(R.string.no_instance_selected)
                 } else {
                     launch(instanceInfo)
                 }
@@ -219,12 +229,54 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
         return null
     }
 
+    fun liftFab(force: Boolean = false) {
+        if (force) {
+            fab.translationY = -dp2px(self, 56f).toFloat()
+            return
+        }
+        fab.animate()
+            .translationY(-dp2px(self, 56f).toFloat())
+            .setDuration(200)
+            .setInterpolator(AccelerateDecelerateInterpolator())
+            .start()
+    }
+
+    fun lowerFab() {
+        fab.animate()
+            .translationY(0f)
+            .setDuration(100)
+            .start()
+    }
+
+    class InstanceListPopupView(context: Context) : BasePopupView(context) {
+        override fun getInnerLayoutId(): Int {
+            return R.layout.layout_launcher_edit_instance_settings
+        }
+
+        override fun getPopupContentView(): View? {
+            return super.getPopupContentView().apply {
+                alpha = 0.5f
+            }
+        }
+    }
+
     fun selectInstance(a: View) {
         val instances = Utils.getAllInstances(self)
         if (instances.isEmpty()) {
-            Snackbar.make(layout, self.getString(R.string.no_instance_installed), Snackbar.LENGTH_SHORT).show()
+            activity.snack(R.string.no_instance_installed)
             return
         }
+
+//        val attachPopupView = XPopup.Builder(self)
+//            .hasStatusBarShadow(false)
+//            .isCoverSoftInput(true)
+//            .hasShadowBg(false)
+//            .isRequestFocus(false)
+//            .isDestroyOnDismiss(true)
+//            .atView(fab)
+//            .asCustom(InstanceListPopupView(self))
+//
+//        attachPopupView.show()
 
         val popup = PopupMenu(self, a).apply {
             gravity = Gravity.END or Gravity.BOTTOM
@@ -244,7 +296,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
     fun editInstance() {
         val ii = Utils.getSelectedInstance(self, true)
         if (ii == null) {
-            Snackbar.make(layout, self.getString(R.string.no_instance_selected), Snackbar.LENGTH_SHORT).show()
+            activity.snack(R.string.no_instance_selected)
             return
         }
         activity.switchFragment(FragmentEditInstance(self, ii), self.getString(R.string.edit_instance) + " - " + ii.name)
@@ -299,14 +351,15 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 alert(R.string.failed_to_check_instance, R.string.launch_failed)
                 return@launch
             }
-            if (instanceInfo.arch != Utils.getProcessArch()) {
+            if (!instanceInfo.isArchAvailable) {
                 dialog.dismiss()
+                val arch = instanceInfo.arch.split(" ").joinToString("/")
                 alert(
                     self.getString(
                         R.string.warning_arch_incompatible,
-                        instanceInfo.arch,
+                        arch,
                         Utils.getProcessArch(),
-                        instanceInfo.arch,
+                        arch,
                         self.getString(R.string.app_name)
                     ), R.string.launch_failed
                 )
@@ -359,6 +412,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                             }
                         }
                     }
+                    classLoader.loadClass("com.mojang.minecraftpe.MainActivity")
                     // Load bridge
                     try {
                         val fileList = self.assets.list("pocket_launcher")
@@ -392,7 +446,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                     updateTaskText("Extracting shared libraries")
                     val cacheLibDir = Utils.getADirIPath(self, "cache/launcher/native_libs")
                     ZipFile(source).use { zipFile ->
-                        val libDir = "lib/${instanceInfo.arch}/"
+                        val libDir = "lib/${Utils.getProcessArch()}/"
 
                         zipFile.entries().asSequence().forEach { entry ->
                             if (entry.name.startsWith(libDir) &&
@@ -464,7 +518,8 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                             self.finish()
                         } catch (e: Exception) {
                             Log.e(TAG, e)
-                            throw e
+                            dialog.cancel()
+                            alert(Log.getStackTraceString(e), R.string.launch_failed)
                         }
                     }
                 } catch (e: Exception) {
@@ -511,5 +566,9 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 return@launch
             }
         }
+    }
+    override fun onResume() {
+        super.onResume()
+        updateInstances()
     }
 }
