@@ -15,6 +15,7 @@ import dev1503.pocketlauncher.launcher.widgets.PackageListView
 class TextPicker (val activity: AppCompatActivity, val title: String, val defaultText: String = "") {
     lateinit var dialog: AlertDialog
     var onInputFinish: ((String) -> Unit)? = null
+    var onInputCanceled: (() -> Unit)? = null
     var isSingleLine: Boolean = true
 
     fun show() {
@@ -42,7 +43,9 @@ class TextPicker (val activity: AppCompatActivity, val title: String, val defaul
             .setPositiveButton(R.string.ok) { _, _ ->
                 onInputFinish?.invoke(input.text.toString())
             }
-            .setNegativeButton(R.string.cancel, null)
+            .setNegativeButton(R.string.cancel) { _, _ ->
+                onInputCanceled?.invoke()
+            }
             .show()
     }
 

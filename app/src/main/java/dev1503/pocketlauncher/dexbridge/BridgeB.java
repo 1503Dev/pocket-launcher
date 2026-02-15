@@ -85,12 +85,13 @@ public class BridgeB {
         Log.d(TAG, "After:onDestroy()");
     }
     public static String getLegacyExternalStoragePath(MinecraftActivity self, String path, String ori) {
-        Log.d(TAG, "getLegacyExternalStoragePath(" + path + "): " + ori);
-        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetLegacyExternalStoragePathListener.NAME, self, path, ori);
+        String rez = "";
+        Object eventResult = modEventListener.invoke(OnMinecraftActivityGetLegacyExternalStoragePathListener.NAME, self, path, rez, ori);
         if (eventResult instanceof String) {
-            ori = (String) eventResult;
+            rez = (String) eventResult;
         }
-        return ori;
+        Log.d(TAG, "getLegacyExternalStoragePath(" + path + "): " + ori + " -> " + rez);
+        return rez;
     }
     public static String getLegacyDeviceID(MinecraftActivity self, String ori) {
         Log.d(TAG, "getLegacyDeviceID(): " + ori);

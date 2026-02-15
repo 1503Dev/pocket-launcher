@@ -17,6 +17,7 @@ class MainApplication: Application() {
 
     override fun onCreate() {
         Utils.application = this
+        Log.i(TAG, "Process arch: ${Utils.getProcessArch()}")
         super.onCreate()
         Log.i(TAG, "onCreate")
         val globalDebugWindow = if (GlobalDebugWindow.ENABLED) GlobalDebugWindow(this) else null
@@ -59,6 +60,7 @@ class MainApplication: Application() {
                 Log.d(TAG, "onConfigurationChanged($p0)")
             }
 
+            @Deprecated("Deprecated in Java")
             override fun onLowMemory() {
                 Log.w(TAG, "onLowMemory()")
             }

@@ -1,8 +1,10 @@
 package dev1503.pocketlauncher
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -11,12 +13,15 @@ import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.os.Environment
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.util.TypedValue
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.ColorInt
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -40,6 +45,9 @@ import kotlin.math.roundToInt
 import androidx.core.graphics.createBitmap
 import dev1503.pocketlauncher.modloader.ModInfo
 import java.util.zip.ZipFile
+import androidx.core.net.toUri
+import okio.Buffer
+import okio.sink
 
 object Utils {
     const val TAG = "Utils"
@@ -328,7 +336,7 @@ object Utils {
         val rtlPattern = Pattern.compile("[\u200E\u200F\u202A-\u202E]")
         return !rtlPattern.matcher(filename).find()
     }
-    suspend fun copyFile(
+    suspend fun fileCopy(
         sourcePath: String?,
         destPath: String,
         onProgress: (Int, Long, Long) -> Unit
@@ -378,6 +386,50 @@ object Utils {
                 }
                 withContext(Dispatchers.Main.immediate) {
                     onProgress(100, totalSize, totalSize)
+                }
+            }
+        }
+    }
+    suspend fun fileCopy(
+        inputStream: InputStream,
+        destPath: String,
+        onProgress: (Int, Long, Long) -> Unit
+    ) {
+        val destFile = File(destPath)
+        destFile.parentFile?.mkdirs()
+
+        val source = inputStream.source()
+        val sink = destFile.sink()
+
+        source.use { src ->
+            sink.use { dst ->
+                val buffer = Buffer()
+                var copiedSize: Long = 0
+                var lastProgress = -1
+                var lastUpdateTime = 0L
+                val updateInterval = 50L
+
+                while (true) {
+                    val bytesRead = src.read(buffer, 8192)
+                    if (bytesRead == -1L) break
+
+                    dst.write(buffer, bytesRead)
+                    copiedSize += bytesRead
+
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastUpdateTime >= updateInterval) {
+                        val progress = if (bytesRead > 0) {
+                            (copiedSize.toFloat() / (copiedSize + 8192) * 100).toInt()
+                        } else 0
+
+                        if (progress != lastProgress) {
+                            withContext(Dispatchers.Main.immediate) {
+                                onProgress(progress, copiedSize, copiedSize)
+                            }
+                            lastProgress = progress
+                            lastUpdateTime = currentTime
+                        }
+                    }
                 }
             }
         }
@@ -470,7 +522,7 @@ object Utils {
                 digest.update(buffer, 0, bytesRead)
             }
         }
-        return bytesToHex(digest.digest())
+        return bytesToHex(digest.digest()).lowercase()
     }
     fun fileSHA1(filePath: String?): String {
         return fileSHA1(File(filePath))
@@ -491,7 +543,24 @@ object Utils {
             }
         }
 
-        return bytesToHex(digest.digest())
+        return bytesToHex(digest.digest()).lowercase()
+    }
+    fun fileSHA1(inputStream: InputStream, progressCallback: ((processedBytes: Long) -> Unit)? = null): String {
+        val digest = MessageDigest.getInstance("SHA-1")
+        var bytesProcessed = 0L
+
+        inputStream.use { stream ->
+            val buffer = ByteArray(8192)
+            var bytesRead: Int
+
+            while (stream.read(buffer).also { bytesRead = it } != -1) {
+                digest.update(buffer, 0, bytesRead)
+                bytesProcessed += bytesRead
+                progressCallback?.invoke(bytesProcessed)
+            }
+        }
+
+        return bytesToHex(digest.digest()).lowercase()
     }
     fun fileSHA1(filePath: String?, progressCallback: ((Float) -> Unit)? = null): String {
         return fileSHA1(File(filePath), progressCallback)
@@ -682,9 +751,49 @@ object Utils {
     fun getProcessArch(): String {
         return Build.SUPPORTED_ABIS[0]
     }
+    fun isPermissionDeclared(context: Context, permission: String): Boolean {
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+        return packageInfo.requestedPermissions?.contains(permission) == true
+    }
+
+    fun checkPermission(context: Context, permission: String): Boolean {
+        if (permission == Manifest.permission.MANAGE_EXTERNAL_STORAGE && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.isExternalStorageManager()
+        }
+        return ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    }
+    fun openAppSettings(activity: AppCompatActivity) {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = "package:${activity.packageName}".toUri()
+        }
+        activity.startActivity(intent)
+    }
+    fun getApkInfo(apkPath: String, packageManager: PackageManager): ApkInfo {
+        val packageInfo = packageManager.getPackageArchiveInfo(apkPath, PackageManager.GET_ACTIVITIES)
+        return packageInfo?.let {
+            ApkInfo(
+                packageName = it.packageName,
+                versionName = it.versionName ?: "",
+                versionCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    it.longVersionCode
+                } else {
+                    it.versionCode.toLong()
+                },
+                appName = it.applicationInfo?.loadLabel(packageManager)?.toString(),
+                path = apkPath
+            )
+        } ?: throw IllegalArgumentException("Invalid APK file: $apkPath")
+    }
 
     interface FilesSearchWithContentListener {
         fun onSearchComplete(files: List<File>, fileContents: List<String>)
         fun onSearchError(error: Throwable)
     }
+    data class ApkInfo(
+        val packageName: String,
+        val versionName: String,
+        val versionCode: Long,
+        val appName: String? = null,
+        val path: String
+    )
 }

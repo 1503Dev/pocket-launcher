@@ -7,6 +7,7 @@ import dev1503.pocketlauncher.dexbridge.MinecraftActivity
 import dev1503.pocketlauncher.mod.events.AfterMinecraftActivityOnCreateListener
 import dev1503.pocketlauncher.mod.events.EventListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetExternalStoragePathListener
+import dev1503.pocketlauncher.mod.events.OnMinecraftActivityGetLegacyExternalStoragePathListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityHasWriteExternalStoragePermissionListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnCreateListener
 import dev1503.pocketlauncher.mod.events.OnMinecraftActivityOnDestroyListener
@@ -46,6 +47,15 @@ class ModEventListener(val modInfo: ModInfo, val listener: EventListener) {
                         "onminecraftactivitygetexternalstoragepath" -> {
                             eventResults[lowerEventName] =
                                 (modListener.listener as OnMinecraftActivityGetExternalStoragePathListener).getExternalStoragePath(
+                                    args[0] as MinecraftActivity,
+                                    args[1] as String,
+                                    args[2] as String,
+                                    lastResult as? String
+                                )
+                        }
+                        "onminecraftactivitygetlegacyexternalstoragepath" -> {
+                            eventResults[lowerEventName] =
+                                (modListener.listener as OnMinecraftActivityGetLegacyExternalStoragePathListener).getLegacyExternalStoragePath(
                                     args[0] as MinecraftActivity,
                                     args[1] as String,
                                     args[2] as String,

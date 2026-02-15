@@ -8,7 +8,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev1503.pocketlauncher.Log
 import dev1503.pocketlauncher.R
 
-open class Fragment (val self: AppCompatActivity, val layout: ViewGroup, val fragmentName: String) {
+open class Fragment (open var self: AppCompatActivity, val layout: ViewGroup, val fragmentName: String) {
     val context: Context = layout.context
     var isInit: Boolean = false
 

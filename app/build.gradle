@@ -133,11 +133,11 @@ tasks.register('buildJavaModApi', Jar) {
         def commonJavaDir = file(mainJavaDir.path.replace('app', 'common'))
         def commonKotlinDir = file(mainKotlinDir.path.replace('app', 'common'))
 
-        println("mainKotlinDir: $mainKotlinDir")
-        println("mainJavaDir: $mainJavaDir")
-        println("minecraftpeJavaDir: $minecraftpeJavaDir")
-        println("commonJavaDir: $commonJavaDir")
-        println("commonKotlinDir: $commonKotlinDir")
+//        println("mainKotlinDir: $mainKotlinDir")
+//        println("mainJavaDir: $mainJavaDir")
+//        println("minecraftpeJavaDir: $minecraftpeJavaDir")
+//        println("commonJavaDir: $commonJavaDir")
+//        println("commonKotlinDir: $commonKotlinDir")
 
         from mainKotlinDir.exists() ? [mainKotlinDir, mainJavaDir] : mainJavaDir
         from minecraftpeJavaDir.exists() ? minecraftpeJavaDir : []

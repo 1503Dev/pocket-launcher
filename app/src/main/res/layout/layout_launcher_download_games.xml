@@ -16,4 +16,15 @@
         app:icon="@drawable/package_2_24px"
         app:iconGravity="textStart"
         android:src="@drawable/arrow_drop_up_24px"/>
+    <com.google.android.material.button.MaterialButton
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/install_from_apk_file"
+        app:cornerRadius="8dp"
+        app:strokeWidth="0dp"
+        app:strokeColor="@android:color/transparent"
+        android:tag="btn_install_from_apk_file"
+        app:icon="@drawable/package_2_24px"
+        app:iconGravity="textStart"
+        android:src="@drawable/arrow_drop_up_24px"/>
 </LinearLayout>

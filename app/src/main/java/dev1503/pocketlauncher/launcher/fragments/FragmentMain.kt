@@ -296,7 +296,20 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                 !File(instanceInfo.dirPath + "manifest.json").exists() ||
                 !File(instanceInfo.dirPath + "manifest.json").isFile){
                 dialog.dismiss()
-                alert(R.string.launch_failed, R.string.failed_to_check_instance)
+                alert(R.string.failed_to_check_instance, R.string.launch_failed)
+                return@launch
+            }
+            if (instanceInfo.arch != Utils.getProcessArch()) {
+                dialog.dismiss()
+                alert(
+                    self.getString(
+                        R.string.warning_arch_incompatible,
+                        instanceInfo.arch,
+                        Utils.getProcessArch(),
+                        instanceInfo.arch,
+                        self.getString(R.string.app_name)
+                    ), R.string.launch_failed
+                )
                 return@launch
             }
             updateProgress(1, iconCheckInstance, iconLoadMods)
@@ -379,7 +392,7 @@ class FragmentMain (self: AppCompatActivity) : Fragment(self, ColumnLayout(self)
                     updateTaskText("Extracting shared libraries")
                     val cacheLibDir = Utils.getADirIPath(self, "cache/launcher/native_libs")
                     ZipFile(source).use { zipFile ->
-                        val libDir = "lib/arm64-v8a/"
+                        val libDir = "lib/${instanceInfo.arch}/"
 
                         zipFile.entries().asSequence().forEach { entry ->
                             if (entry.name.startsWith(libDir) &&

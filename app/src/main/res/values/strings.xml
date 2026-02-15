@@ -60,4 +60,9 @@
     <string name="internal_storage">Internal Storage</string>
     <string name="all_instances">All Instances</string>
     <string name="leave_blank_to_follow_global">Leave blank to follow global settings</string>
+    <string name="install_from_apk_file">Install from APK file</string>
+    <string name="you_need_to_grant_permission_to_continue">You need to grant permission to continue</string>
+    <string name="invalid_file_type">Invalid file type</string>
+    <string name="caching_apk">Caching APK</string>
+    <string name="warning_arch_incompatible">Process architecture %s is incompatible with instance architecture %s. You need to install %s architecture of %s to continue</string>
 </resources>

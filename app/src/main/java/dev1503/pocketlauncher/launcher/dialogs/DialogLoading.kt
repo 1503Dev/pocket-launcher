@@ -1,5 +1,6 @@
 package dev1503.pocketlauncher.launcher.dialogs
 
+import android.annotation.SuppressLint
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -45,12 +46,19 @@ class DialogLoading(val activity: AppCompatActivity, val title: String, val indi
         .setCancelable(false)
     lateinit var dialog: AlertDialog
 
+    @SuppressLint("InflateParams")
     fun init(): DialogLoading {
         when (indicatorType) {
             TYPE_LINEAR_DETERMINATE_PROGRESS -> {
                 layout = activity.layoutInflater.inflate(R.layout.dialog_loading_linear_deterministic_progress, null) as LinearLayout
                 textView = layout.findViewWithTag<TextView>("text")
                 linearProgressIndicator = layout.findViewWithTag<LinearProgressIndicator>("progress")
+            }
+            TYPE_LINEAR_INDETERMINATE_PROGRESS -> {
+                layout = activity.layoutInflater.inflate(R.layout.dialog_loading_linear_deterministic_progress, null) as LinearLayout
+                textView = layout.findViewWithTag<TextView>("text")
+                linearProgressIndicator = layout.findViewWithTag<LinearProgressIndicator>("progress")
+                linearProgressIndicator.isIndeterminate = true
             }
         }
         if (cancelable) {
